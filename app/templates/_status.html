@@ -1,0 +1,18 @@
+{% if err %}<div class="banner err">{{ err }}</div>{% endif %}
+{% if msg %}<div class="banner ok">{{ msg }}</div>{% endif %}
+
+{% if s.running %}
+<div class="tx-live">
+  <div class="dot"></div>
+  <div>
+    <strong>TRANSMITTING — {{ s.tx_mode }}</strong>
+    <div class="sub">pid {{ s.pid }} · {{ s.elapsed_s }}s elapsed · {{ s.remaining_s }}s until auto-kill</div>
+    <code>{{ s.argv | join(' ') }}</code>
+  </div>
+</div>
+{% else %}
+<div class="tx-idle">
+  <div class="dot idle"></div>
+  <span>Idle — no transmission ({{ s.mode }} backend)</span>
+</div>
+{% endif %}

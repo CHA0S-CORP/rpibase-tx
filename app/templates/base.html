@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>rpibase-tx</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+<body>
+  <header class="topbar {{ 'live' if mode == 'real' else 'mock' }}">
+    <span class="brand">📡 rpibase-tx</span>
+    <span class="mode-badge">{{ 'LIVE — REAL TX' if mode == 'real' else 'MOCK — no RF' }}</span>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

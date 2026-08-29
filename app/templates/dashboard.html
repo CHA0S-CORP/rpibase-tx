@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="grid">
+  <section class="panel">
+    <h2>Transmit</h2>
+    <label for="mode-select">Mode</label>
+    <select id="mode-select" name="mode"
+            hx-get="/partials/form"
+            hx-target="#mode-form"
+            hx-trigger="change">
+      {% for name, m in modes.items() %}
+      <option value="{{ name }}">{{ name }} — {{ m.desc }}</option>
+      {% endfor %}
+    </select>
+
+    <div id="mode-form"
+         hx-get="/partials/form"
+         hx-trigger="load">
+    </div>
+  </section>
+
+  <aside class="panel">
+    <h2>Status</h2>
+    <div id="status"
+         hx-get="/partials/status"
+         hx-trigger="load, every 1s">
+      <p>loading…</p>
+    </div>
+
+    <button class="stop"
+            hx-post="/web/stop"
+            hx-target="#status">■ STOP ALL</button>
+
+    <div class="meta">
+      <p><strong>Allowed freq (Hz):</strong></p>
+      <ul>
+        {% for lo, hi in allowlist %}<li>{{ "{:,}".format(lo) }} – {{ "{:,}".format(hi) }}</li>{% endfor %}
+      </ul>
+      <p><strong>Max TX:</strong> {{ max_seconds }}s (auto-kill)</p>
+    </div>
+  </aside>
+</div>
+{% endblock %}

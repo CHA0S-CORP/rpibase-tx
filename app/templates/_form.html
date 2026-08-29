@@ -1,0 +1,25 @@
+<form hx-post="/web/tx/{{ mode }}" hx-target="#status" class="tx-form">
+  {% for field, spec in schema.get('properties', {}).items() %}
+  {% set required = field in schema.get('required', []) %}
+  <div class="field">
+    <label for="f-{{ field }}">
+      {{ field }}{% if required %} <span class="req">*</span>{% endif %}
+    </label>
+    {% set t = spec.get('type', 'string') %}
+    <input id="f-{{ field }}" name="{{ field }}"
+           type="{{ 'number' if t in ('integer','number') else 'text' }}"
+           {% if t == 'number' %}step="any"{% endif %}
+           {% if spec.get('default') is not none %}value="{{ spec.get('default') }}"{% endif %}
+           {% if required %}required{% endif %}
+           placeholder="{{ spec.get('description', '') }}">
+    {% if spec.get('description') %}<small>{{ spec['description'] }}</small>{% endif %}
+  </div>
+  {% endfor %}
+
+  <label class="authz">
+    <input type="checkbox" name="authorized">
+    I am authorized to transmit on this frequency and accept responsibility.
+  </label>
+
+  <button type="submit" class="go">▶ Transmit</button>
+</form>
