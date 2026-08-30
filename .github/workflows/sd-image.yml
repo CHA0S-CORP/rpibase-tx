@@ -44,12 +44,30 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@main
         with:
+          # Pull as much as possible prebuilt: cache.nixos.org (default) plus
+          # the nix-community cache. Emulated builds still fall back to source
+          # only for what no cache has (our rpitx/dashboard derivations).
           extra-conf: |
             extra-platforms = aarch64-linux
             max-jobs = auto
+            extra-substituters = https://nix-community.cachix.org
+            extra-trusted-public-keys = nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
+            builders-use-substitutes = true
 
+      # Persist the whole /nix/store across runs. Keyed on flake.lock (+ this
+      # workflow), so an unchanged closure restores fully and the expensive
+      # emulated builds/downloads are skipped. GC keeps the cache under GitHub's
+      # per-repo limit; a partial-match prefix still gives a warm start.
       - name: Cache Nix store
-        uses: DeterminateSystems/magic-nix-cache-action@main
+        uses: nix-community/cache-nix-action@v6
+        with:
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('flake.lock', '.github/workflows/sd-image.yml') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+          gc-max-store-size-linux: 8G
+          purge: true
+          purge-prefixes: nix-${{ runner.os }}-
+          purge-created: 0
+          purge-primary-key: never
 
       - name: Build SD image
         run: nix build '.#packages.aarch64-linux.sdImage' -L
