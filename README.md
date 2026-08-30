@@ -79,6 +79,13 @@ curl -X POST localhost:8000/api/tx/tune \
 Responses: `202` started · `403` not authorized · `400` invalid/blocked freq ·
 `409` already transmitting · `404` unknown mode.
 
+## n8n node
+
+Drive this API from [n8n](https://n8n.io) with the **`n8n-nodes-rpitx`** community
+node: [CHA0S-CORP/n8n-nodes → packages/n8n-nodes-rpitx](https://github.com/CHA0S-CORP/n8n-nodes/tree/main/packages/n8n-nodes-rpitx).
+It exposes status/modes, start/stop, dedicated Broadcast FM · Send POCSAG · Send SSTV
+operations (with binary upload from a prior node), and a generic Start for any mode.
+
 ## Architecture
 
 ```
