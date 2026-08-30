@@ -128,8 +128,16 @@ nix build .#rpitx-dashboard        # just the dashboard package
 nix build .#sdImage                # full flashable Pi 3 image
 ```
 
-> First `nix build` of `rpitx` fails printing the real source hashes — paste them
-> over the two `lib.fakeHash` placeholders in `pkgs/rpitx.nix`, then rebuild.
+### CI / releases
+
+`.github/workflows/sd-image.yml` builds `.#sdImage` on GitHub Actions (x86 runners
+build the aarch64 image via QEMU binfmt). It runs on manual dispatch (uploads the
+`.img.zst` as a build artifact) and on `v*` tags (also publishes a GitHub Release with
+the image attached). To cut a release:
+
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
 
 Module options (set in `flake.nix` under `services.rpitx-dashboard`):
 

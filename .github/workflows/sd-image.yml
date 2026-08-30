@@ -1,0 +1,78 @@
+name: Build SD image
+
+# Builds the Raspberry Pi 3 NixOS SD image (`.#sdImage`). The image targets
+# aarch64-linux, so on the x86 GitHub runners we register QEMU binfmt and tell
+# Nix it may build aarch64 derivations via emulation. Most of the closure comes
+# prebuilt from cache.nixos.org; only our packages (rpitx, the dashboard) build
+# under emulation, then the image is assembled and zstd-compressed.
+#
+# Runs on manual dispatch (artifact only) and on version tags (also publishes a
+# GitHub Release with the image attached).
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: sd-image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write # create releases / upload assets on tags
+    steps:
+      - uses: actions/checkout@v4
+
+      # NixOS image assembly needs far more than the default free space.
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          large-packages: false
+
+      # Register binfmt handlers so the runner can execute aarch64 binaries.
+      - name: Set up QEMU (arm64)
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          extra-conf: |
+            extra-platforms = aarch64-linux
+            max-jobs = auto
+
+      - name: Cache Nix store
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Build SD image
+        run: nix build '.#packages.aarch64-linux.sdImage' -L
+
+      - name: Collect image
+        id: img
+        run: |
+          mkdir -p artifacts
+          img=$(ls result/sd-image/*.img.zst | head -1)
+          cp -L "$img" artifacts/
+          echo "name=$(basename "$img")" >> "$GITHUB_OUTPUT"
+          ls -lh artifacts/
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpitx-pi3-sd-image
+          path: artifacts/*.img.zst
+          if-no-files-found: error
+
+      - name: Publish release (tags only)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*.img.zst
+          generate_release_notes: true
