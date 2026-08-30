@@ -1,28 +1,15 @@
+# Nix
+/result
+/result-*
+
 # Python
 .venv/
 __pycache__/
-*.py[cod]
+*.pyc
 .pytest_cache/
-.mypy_cache/
-.ruff_cache/
-*.egg-info/
-
-# Local env / secrets (never commit real config)
 .env
-.env.*
-!.env.example
 
-# Runtime data
-uploads/
-*.lock
-!flake.lock
-
-# Nix build output
-result
-result-*
-
-# Editor / OS
-.DS_Store
-*.swp
-.idea/
-.vscode/
+# Build scratch
+*.img
+*.img.zst
+out.txt

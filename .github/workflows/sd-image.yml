@@ -1,10 +1,11 @@
 name: Build SD image
 
 # Builds the Raspberry Pi 3 NixOS SD image (`.#sdImage`). The image targets
-# aarch64-linux, so on the x86 GitHub runners we register QEMU binfmt and tell
-# Nix it may build aarch64 derivations via emulation. Most of the closure comes
-# prebuilt from cache.nixos.org; only our packages (rpitx, the dashboard) build
-# under emulation, then the image is assembled and zstd-compressed.
+# aarch64-linux and we run on a NATIVE arm64 runner, so everything builds
+# without emulation. This matters here because the nixos-hardware Pi kernel is
+# not in any binary cache and must compile from source; under QEMU that alone
+# would blow the timeout. Most of the rest of the closure comes prebuilt from
+# cache.nixos.org; the image is then assembled and zstd-compressed.
 #
 # Runs on manual dispatch (artifact only) and on version tags (also publishes a
 # GitHub Release with the image attached).
@@ -21,7 +22,9 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Native arm64 runner: builds the aarch64 image without emulation. Free on
+    # public repos. The Pi kernel compiles here in-arch instead of under QEMU.
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 120
     permissions:
       contents: write # create releases / upload assets on tags
@@ -35,21 +38,16 @@ jobs:
           tool-cache: true
           large-packages: false
 
-      # Register binfmt handlers so the runner can execute aarch64 binaries.
-      - name: Set up QEMU (arm64)
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
-
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@main
         with:
-          # Pull as much as possible prebuilt: cache.nixos.org (default) plus
-          # the nix-community cache. Emulated builds still fall back to source
-          # only for what no cache has (our rpitx/dashboard derivations).
+          # Native aarch64 build — no extra-platforms/QEMU needed. Pull as much
+          # prebuilt as possible: cache.nixos.org (default) + nix-community.
+          # cores=0 uses all runner CPUs per build; max-jobs=1 keeps peak memory
+          # bounded during the kernel link.
           extra-conf: |
-            extra-platforms = aarch64-linux
-            max-jobs = auto
+            max-jobs = 1
+            cores = 0
             extra-substituters = https://nix-community.cachix.org
             extra-trusted-public-keys = nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
             builders-use-substitutes = true
