@@ -1,0 +1,22 @@
+{# Limits card. The watchdog cap is editable at runtime; the hint in the
+   transmit header is updated out-of-band so the two never disagree. #}
+<div class="panel limits" id="limits">
+  <div class="panel-title">Limits</div>
+  {% if err %}<div class="banner err">{{ err }}</div>{% endif %}
+  {% if msg %}<div class="banner ok">{{ msg }}</div>{% endif %}
+  <div class="kv"><span>Allowed frequencies</span><span class="mono">{{ allowlist | fmt_ranges }}</span></div>
+  <form class="kv watchdog" hx-post="/web/settings" hx-target="#limits" hx-swap="outerHTML">
+    <label for="f-watchdog">Watchdog auto-kill</label>
+    <span class="control small">
+      <input id="f-watchdog" name="max_tx_seconds" type="number" class="mono"
+             value="{{ max_seconds }}" min="1" max="{{ max_seconds_hard }}" required>
+      <span class="adorn mono">s · max {{ max_seconds_hard }}</span>
+    </span>
+    <button type="submit" class="mini">Set</button>
+  </form>
+  <div class="kv"><span>Binaries</span><span class="mono">{{ bin_dir }}</span></div>
+</div>
+{% if oob %}
+<span id="watchdog-hint" class="hint" hx-swap-oob="true">One transmission at a time. Watchdog kills at {{ max_seconds }} s.</span>
+<span id="watchdog-cap" class="adorn mono" hx-swap-oob="true">cap {{ max_seconds }}</span>
+{% endif %}

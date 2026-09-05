@@ -5,7 +5,7 @@ import asyncio
 import socket
 from pathlib import Path
 
-from fastapi import APIRouter, File, Request, UploadFile
+from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
@@ -44,6 +44,7 @@ def _base_ctx() -> dict:
         "hostname": socket.gethostname(),
         "allowlist": settings.allowed_ranges,
         "max_seconds": settings.max_tx_seconds,
+        "max_seconds_hard": settings.max_tx_seconds_hard,
         "bin_dir": settings.bin_dir,
         "modes": REGISTRY,
     }
@@ -89,6 +90,26 @@ def _uploads(request: Request, err: str | None = None, code: int = 200):
     return templates.TemplateResponse(
         request, "_uploads.html", {"uploads": list_uploads(), "err": err}, status_code=code
     )
+
+
+def _limits(request: Request, msg: str | None = None, err: str | None = None, code: int = 200):
+    return templates.TemplateResponse(
+        request, "_limits.html", {**_base_ctx(), "msg": msg, "err": err, "oob": True}, status_code=code
+    )
+
+
+@router.get("/partials/limits", response_class=HTMLResponse)
+def limits_partial(request: Request) -> HTMLResponse:
+    return _limits(request)
+
+
+@router.post("/web/settings", response_class=HTMLResponse)
+def web_settings(request: Request, max_tx_seconds: int = Form(...)) -> HTMLResponse:
+    try:
+        settings.set_max_tx_seconds(max_tx_seconds)
+    except ValueError as e:
+        return _limits(request, err=str(e), code=400)
+    return _limits(request, msg=f"Watchdog set to {max_tx_seconds} s for the next transmission.")
 
 
 @router.get("/partials/uploads", response_class=HTMLResponse)

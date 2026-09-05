@@ -54,11 +54,26 @@ in
     maxTxSeconds = lib.mkOption {
       type = lib.types.ints.positive;
       default = 60;
-      description = "Hard cap in seconds; a watchdog auto-kills any longer TX.";
+      description = ''
+        Watchdog auto-kill in seconds at startup. Adjustable at runtime from
+        the dashboard (Limits card) or `PUT /api/settings`, never above
+        {option}`maxTxSecondsHard`.
+      '';
+    };
+
+    maxTxSecondsHard = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 600;
+      description = "Absolute ceiling for the runtime watchdog setting.";
     };
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = [{
+      assertion = cfg.maxTxSeconds <= cfg.maxTxSecondsHard;
+      message = "services.rpitx-dashboard.maxTxSeconds must not exceed maxTxSecondsHard";
+    }];
+
     environment.systemPackages = [ pkgs.rpitx cfg.package pkgs.sox pkgs.csdr pkgs.imagemagick ];
 
     systemd.services.rpitx-dashboard = {
@@ -91,6 +106,7 @@ in
           "BIN_DIR=${pkgs.rpitx}/bin"
           "FREQ_ALLOWLIST=${cfg.freqAllowlist}"
           "MAX_TX_SECONDS=${toString cfg.maxTxSeconds}"
+          "MAX_TX_SECONDS_HARD=${toString cfg.maxTxSecondsHard}"
           # StateDirectory=rpitx-dashboard resolves to /var/lib/rpitx-dashboard.
           "UPLOAD_DIR=/var/lib/rpitx-dashboard/uploads"
           # Host-global single-transmitter lock (RuntimeDirectory -> /run).

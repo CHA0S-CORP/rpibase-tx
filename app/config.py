@@ -18,8 +18,13 @@ class Settings(BaseSettings):
     # Allowed frequency ranges in Hz, parsed from "low-high,low-high"
     freq_allowlist: str = "430000000-440000000"
 
-    # Hard cap on any single transmission (seconds)
+    # Watchdog: auto-kill any transmission after this many seconds. This is the
+    # startup value; it can be changed at runtime (dashboard Limits card or
+    # PUT /api/settings) up to max_tx_seconds_hard.
     max_tx_seconds: int = 60
+
+    # Absolute ceiling the runtime watchdog setting can never exceed.
+    max_tx_seconds_hard: int = 600
 
     # Where uploaded audio/image/IQ files are stored for later transmission.
     upload_dir: str = "uploads"
@@ -45,6 +50,24 @@ class Settings(BaseSettings):
         if v not in ("mock", "real"):
             raise ValueError("rpitx_mode must be 'mock' or 'real'")
         return v
+
+    @field_validator("max_tx_seconds", "max_tx_seconds_hard")
+    @classmethod
+    def _positive(cls, v: int) -> int:
+        if v < 1:
+            raise ValueError("must be >= 1 second")
+        return v
+
+    def set_max_tx_seconds(self, seconds: int) -> int:
+        """Runtime watchdog change, bounded to [1, max_tx_seconds_hard]."""
+        if not isinstance(seconds, int) or isinstance(seconds, bool):
+            raise ValueError("max_tx_seconds must be an integer")
+        if not 1 <= seconds <= self.max_tx_seconds_hard:
+            raise ValueError(
+                f"max_tx_seconds must be between 1 and {self.max_tx_seconds_hard}"
+            )
+        self.max_tx_seconds = seconds
+        return seconds
 
     @field_validator("freq_allowlist")
     @classmethod
@@ -87,3 +110,5 @@ def _parse_ranges(spec: str) -> list[tuple[int, int]]:
 
 
 settings = Settings()
+if settings.max_tx_seconds > settings.max_tx_seconds_hard:
+    raise ValueError("MAX_TX_SECONDS exceeds MAX_TX_SECONDS_HARD")

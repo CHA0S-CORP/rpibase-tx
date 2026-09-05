@@ -52,6 +52,19 @@ and remembered in the browser: **Panel** (dark instrument panel, default), **Con
 (terminal), **Notebook** (light paper). They are pure CSS variable sets in
 `app/static/app.css` keyed on `<html data-theme>`; add one by defining another block.
 
+## Watchdog
+
+Every transmission is auto-killed at `min(requested max_seconds, MAX_TX_SECONDS)`.
+`MAX_TX_SECONDS` is the startup value; change it at runtime from the Limits card or
+
+```bash
+curl -X PUT localhost:8000/api/settings -H 'content-type: application/json' \
+     -d '{"max_tx_seconds": 120}'
+```
+
+It applies to the next transmission, never one already running, and can never exceed
+`MAX_TX_SECONDS_HARD` (default 600). The runtime value resets to `MAX_TX_SECONDS` on restart.
+
 ## Uploads
 
 `POST /api/upload` (multipart `file`) stores an audio/image/IQ file under `UPLOAD_DIR`

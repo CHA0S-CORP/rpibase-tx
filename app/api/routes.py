@@ -6,6 +6,7 @@ import asyncio
 from fastapi import APIRouter, Body, File, HTTPException, UploadFile
 from pydantic import ValidationError
 
+from app.config import settings
 from app.tx.manager import TxBusyError, manager
 from app.tx.modes import REGISTRY, get_mode
 from app.uploads import list_uploads, save_upload
@@ -24,6 +25,32 @@ def list_modes() -> dict:
 @router.get("/status")
 def status() -> dict:
     return manager.status()
+
+
+def _settings_view() -> dict:
+    return {
+        "max_tx_seconds": settings.max_tx_seconds,
+        "max_tx_seconds_hard": settings.max_tx_seconds_hard,
+        "freq_allowlist": settings.allowed_ranges,
+        "mode": settings.rpitx_mode,
+    }
+
+
+@router.get("/settings")
+def get_settings() -> dict:
+    return _settings_view()
+
+
+@router.put("/settings")
+def put_settings(body: dict = Body(...)) -> dict:
+    """Runtime-adjustable settings. Only the watchdog cap for now; applies to
+    the next transmission, never one already running. Resets on restart."""
+    if "max_tx_seconds" in body:
+        try:
+            settings.set_max_tx_seconds(body["max_tx_seconds"])
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+    return _settings_view()
 
 
 @router.post("/tx/{mode}", status_code=202)

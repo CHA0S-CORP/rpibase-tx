@@ -4,7 +4,7 @@
   <section class="tx-col">
     <div class="tx-head">
       <h1>Transmit</h1>
-      <span class="hint">One transmission at a time. Watchdog kills at {{ max_seconds }} s.</span>
+      <span id="watchdog-hint" class="hint">One transmission at a time. Watchdog kills at {{ max_seconds }} s.</span>
     </div>
 
     <nav class="mode-tabs" id="mode-tabs" aria-label="Mode">
@@ -32,12 +32,7 @@
       <div class="panel"><p class="hint">loading…</p></div>
     </div>
 
-    <div class="panel limits">
-      <div class="panel-title">Limits</div>
-      <div class="kv"><span>Allowed frequencies</span><span class="mono">{{ allowlist | fmt_ranges }}</span></div>
-      <div class="kv"><span>Max transmission</span><span class="mono">{{ max_seconds }} s</span></div>
-      <div class="kv"><span>Binaries</span><span class="mono">{{ bin_dir }}</span></div>
-    </div>
+    {% include "_limits.html" %}
 
     <div id="uploads"
          hx-get="/partials/uploads"

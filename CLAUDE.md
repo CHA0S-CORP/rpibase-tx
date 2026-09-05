@@ -18,7 +18,8 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python -m pytest tests/test_modes.py::test_pocsag_argv   # single test
 ```
 
-Config is env/`.env` (see `.env.example`): `RPITX_MODE`, `BIN_DIR`, `FREQ_ALLOWLIST`, `MAX_TX_SECONDS`.
+Config is env/`.env` (see `.env.example`): `RPITX_MODE`, `BIN_DIR`, `FREQ_ALLOWLIST`, `MAX_TX_SECONDS`,
+`MAX_TX_SECONDS_HARD`, `UPLOAD_DIR`, `ALLOW_ANY_PATH`, `TX_LOCK_FILE`.
 `pytest.ini` sets `asyncio_mode = auto`, so async tests need no marker.
 
 ## Architecture
@@ -34,7 +35,9 @@ Request → `api/routes.py` (JSON) or `web/routes.py` (HTMX) → `tx/manager.py`
   `MockBackend` only logs it. Builders must never emit absolute paths.
 - **`TxManager` (singleton `manager`) enforces one TX at a time.** rpitx owns the DMA/PLL hardware
   exclusively, so a start while busy raises `TxBusyError` → HTTP `409` (fail fast, never queue). It also
-  runs an asyncio **watchdog** that auto-stops at `min(requested, MAX_TX_SECONDS)` — the hard duration cap.
+  runs an asyncio **watchdog** that auto-stops at `min(requested, settings.max_tx_seconds)`. That value is
+  runtime-adjustable (`PUT /api/settings`, Limits card) via `Settings.set_max_tx_seconds`, bounded by
+  `MAX_TX_SECONDS_HARD`; it is read at each `start()`, so a change never touches a running TX.
 - **`backends.py`** abstracts process lifecycle behind a `Backend` Protocol. Stop is always
   **SIGINT-then-SIGKILL**: rpitx cleans up DMA on SIGINT, so never hard-kill first.
 - **Safety invariants** (don't regress these): every start requires an explicit `authorized` ack

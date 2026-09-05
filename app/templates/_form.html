@@ -25,7 +25,7 @@
                {% if required %}required{% endif %}>
         {% endif %}
         {% if field == 'freq_hz' %}<span class="adorn mono mhz"></span>
-        {% elif field == 'max_seconds' %}<span class="adorn mono">cap {{ max_seconds }}</span>
+        {% elif field == 'max_seconds' %}<span id="watchdog-cap" class="adorn mono">cap {{ max_seconds }}</span>
         {% elif spec.get('maxLength') %}<span class="adorn mono">max {{ spec['maxLength'] }}</span>{% endif %}
       </div>
       {% if spec.get('description') %}<small>{{ spec['description'] }}</small>{% endif %}

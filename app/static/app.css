@@ -91,6 +91,15 @@ main { padding: 36px 40px 40px; }
 .panel-head .panel-title { margin-bottom: 0; }
 .kv { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; font-size: 14px; color: var(--muted); padding: 5px 0; }
 .kv .mono { color: var(--fg); text-align: right; }
+.kv.watchdog { margin: 0; align-items: center; }
+.kv.watchdog label { flex: 1 1 auto; }
+.control.small { height: 36px; padding: 0 10px; width: 150px; flex: none; }
+.control.small input { font-size: 14px; }
+.mini {
+  height: 36px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: var(--radius-s);
+  background: var(--panel-2); color: var(--fg); font: 600 13px var(--font); flex: none;
+}
+.limits .banner { margin: 4px 0 8px; }
 
 /* Transmit */
 .tx-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }

@@ -218,3 +218,35 @@ def test_web_upload_and_status_live(client, tmp_path, monkeypatch):
 def test_web_tx_validation_error_renders(client):
     r = client.post("/web/tx/tune", data={"freq_hz": 1, "authorized": "on"})
     assert r.status_code == 400 and "freq_hz" in r.text
+
+
+def test_watchdog_runtime_setting(client, monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "max_tx_seconds", 60)
+    monkeypatch.setattr(settings, "max_tx_seconds_hard", 120)
+    assert client.get("/api/settings").json()["max_tx_seconds"] == 60
+    r = client.put("/api/settings", json={"max_tx_seconds": 90})
+    assert r.status_code == 200 and r.json()["max_tx_seconds"] == 90
+    # Applies to the next TX: request 500 s, clamped to 90.
+    r = client.post("/api/tx/tune", json={"freq_hz": FREQ, "max_seconds": 500, "authorized": True})
+    assert r.status_code == 202
+    assert client.get("/api/status").json()["remaining_s"] <= 90
+    client.post("/api/stop")
+    # Bounded by the hard ceiling and by 1.
+    assert client.put("/api/settings", json={"max_tx_seconds": 121}).status_code == 400
+    assert client.put("/api/settings", json={"max_tx_seconds": 0}).status_code == 400
+    assert client.put("/api/settings", json={"max_tx_seconds": "30"}).status_code == 400
+    assert settings.max_tx_seconds == 90
+
+
+def test_watchdog_web_form(client, monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "max_tx_seconds", 60)
+    monkeypatch.setattr(settings, "max_tx_seconds_hard", 120)
+    r = client.post("/web/settings", data={"max_tx_seconds": 45})
+    assert r.status_code == 200 and "Watchdog set to 45 s" in r.text
+    assert 'id="watchdog-hint"' in r.text and "kills at 45 s" in r.text
+    assert client.post("/web/settings", data={"max_tx_seconds": 999}).status_code == 400
+    assert settings.max_tx_seconds == 45
