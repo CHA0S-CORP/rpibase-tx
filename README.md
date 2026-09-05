@@ -154,12 +154,19 @@ No monitor needed. After flashing, the SD card's FAT partition holds
 hostname, username/password, SSH public key, Wi-Fi, timezone. Imager writes
 `firstrun.sh`; the image ships NixOS shims for `imager_custom` / `userconf`, so the
 stock script runs unmodified on first boot. Imager 1.x customises the local
-`.img.zst` directly. Imager 2.x only customises images a manifest describes, so each
-release also publishes `os_list.json`:
+`.img.zst` directly. **Imager 2.x greys out Customisation for any local image** it has no
+metadata for, so give it a manifest:
 
 ```bash
+# for a downloaded CI artifact / local build
+./imager/local-manifest.py ~/Downloads/nixos-image-sd-card-*.img.zst
+open ~/Downloads/os_list_local.rpi-imager-manifest      # or: rpi-imager --repo <that file>
+
+# for a tagged release (published next to the image)
 rpi-imager --repo https://github.com/CHA0S-CORP/rpibase-tx/releases/download/<TAG>/os_list.json
 ```
+
+Pick "rpibase-tx" on the OS page and the Customisation step is enabled.
 
 **Plain files** (Raspberry Pi OS conventions) dropped on the FAT partition:
 

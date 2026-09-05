@@ -13,9 +13,12 @@ boot and renamed firstrun.sh.applied.
 
   Imager 1.x: works out of the box with the local .img.zst file.
   Imager 2.x: local images are not customisable unless a manifest says so.
-              Run it with the os_list.json shipped next to the release:
+              Either use the os_list.json shipped next to a release:
                 rpi-imager --repo https://github.com/CHA0S-CORP/rpibase-tx/releases/download/<TAG>/os_list.json
-              then pick "rpibase-tx" from the list.
+              or generate one for a downloaded image:
+                ./imager/local-manifest.py path/to/image.img.zst
+              and open the resulting os_list_local.rpi-imager-manifest.
+              Then pick "rpibase-tx" from the OS list.
 
 Notes: the username you enter becomes an additional sudo user (pi stays);
 keyboard layout is ignored (no console needed).
