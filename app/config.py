@@ -20,7 +20,8 @@ class Settings(BaseSettings):
 
     # Watchdog: auto-kill any transmission after this many seconds. This is the
     # startup value; it can be changed at runtime (dashboard Limits card or
-    # PUT /api/settings) up to max_tx_seconds_hard.
+    # PUT /api/settings) up to max_tx_seconds_hard. 0 = watchdog OFF: a
+    # transmission then runs until the process exits or STOP is pressed.
     max_tx_seconds: int = 60
 
     # Absolute ceiling the runtime watchdog setting can never exceed.
@@ -51,20 +52,31 @@ class Settings(BaseSettings):
             raise ValueError("rpitx_mode must be 'mock' or 'real'")
         return v
 
-    @field_validator("max_tx_seconds", "max_tx_seconds_hard")
+    @field_validator("max_tx_seconds")
+    @classmethod
+    def _non_negative(cls, v: int) -> int:
+        if v < 0:
+            raise ValueError("must be >= 0 (0 disables the watchdog)")
+        return v
+
+    @field_validator("max_tx_seconds_hard")
     @classmethod
     def _positive(cls, v: int) -> int:
         if v < 1:
             raise ValueError("must be >= 1 second")
         return v
 
+    @property
+    def watchdog_enabled(self) -> bool:
+        return self.max_tx_seconds > 0
+
     def set_max_tx_seconds(self, seconds: int) -> int:
-        """Runtime watchdog change, bounded to [1, max_tx_seconds_hard]."""
+        """Runtime watchdog change: 0 disables it, else [1, max_tx_seconds_hard]."""
         if not isinstance(seconds, int) or isinstance(seconds, bool):
             raise ValueError("max_tx_seconds must be an integer")
-        if not 1 <= seconds <= self.max_tx_seconds_hard:
+        if not 0 <= seconds <= self.max_tx_seconds_hard:
             raise ValueError(
-                f"max_tx_seconds must be between 1 and {self.max_tx_seconds_hard}"
+                f"max_tx_seconds must be 0 (off) or between 1 and {self.max_tx_seconds_hard}"
             )
         self.max_tx_seconds = seconds
         return seconds

@@ -31,6 +31,7 @@ def _settings_view() -> dict:
     return {
         "max_tx_seconds": settings.max_tx_seconds,
         "max_tx_seconds_hard": settings.max_tx_seconds_hard,
+        "watchdog": settings.watchdog_enabled,
         "freq_allowlist": settings.allowed_ranges,
         "mode": settings.rpitx_mode,
     }
@@ -43,8 +44,9 @@ def get_settings() -> dict:
 
 @router.put("/settings")
 def put_settings(body: dict = Body(...)) -> dict:
-    """Runtime-adjustable settings. Only the watchdog cap for now; applies to
-    the next transmission, never one already running. Resets on restart."""
+    """Runtime-adjustable settings. Only the watchdog cap for now: seconds, or
+    0 to disable it. Applies to the next transmission, never one already
+    running. Resets on restart."""
     if "max_tx_seconds" in body:
         try:
             settings.set_max_tx_seconds(body["max_tx_seconds"])

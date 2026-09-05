@@ -37,7 +37,9 @@ Request → `api/routes.py` (JSON) or `web/routes.py` (HTMX) → `tx/manager.py`
   exclusively, so a start while busy raises `TxBusyError` → HTTP `409` (fail fast, never queue). It also
   runs an asyncio **watchdog** that auto-stops at `min(requested, settings.max_tx_seconds)`. That value is
   runtime-adjustable (`PUT /api/settings`, Limits card) via `Settings.set_max_tx_seconds`, bounded by
-  `MAX_TX_SECONDS_HARD`; it is read at each `start()`, so a change never touches a running TX.
+  `MAX_TX_SECONDS_HARD`; it is read at each `start()`, so a change never touches a running TX. `0` = watchdog
+  off: `_clamp_duration` returns `None`, `_supervise` waits without timeout, `TxState.deadline` is `None`
+  and `status()["watchdog"]` is false.
 - **`backends.py`** abstracts process lifecycle behind a `Backend` Protocol. Stop is always
   **SIGINT-then-SIGKILL**: rpitx cleans up DMA on SIGINT, so never hard-kill first.
 - **Safety invariants** (don't regress these): every start requires an explicit `authorized` ack

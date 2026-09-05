@@ -235,7 +235,7 @@ def test_watchdog_runtime_setting(client, monkeypatch):
     client.post("/api/stop")
     # Bounded by the hard ceiling and by 1.
     assert client.put("/api/settings", json={"max_tx_seconds": 121}).status_code == 400
-    assert client.put("/api/settings", json={"max_tx_seconds": 0}).status_code == 400
+    assert client.put("/api/settings", json={"max_tx_seconds": -1}).status_code == 400
     assert client.put("/api/settings", json={"max_tx_seconds": "30"}).status_code == 400
     assert settings.max_tx_seconds == 90
 
@@ -245,8 +245,27 @@ def test_watchdog_web_form(client, monkeypatch):
 
     monkeypatch.setattr(settings, "max_tx_seconds", 60)
     monkeypatch.setattr(settings, "max_tx_seconds_hard", 120)
-    r = client.post("/web/settings", data={"max_tx_seconds": 45})
+    r = client.post("/web/settings", data={"max_tx_seconds": 45, "watchdog": "on"})
     assert r.status_code == 200 and "Watchdog set to 45 s" in r.text
     assert 'id="watchdog-hint"' in r.text and "kills at 45 s" in r.text
-    assert client.post("/web/settings", data={"max_tx_seconds": 999}).status_code == 400
+    assert client.post("/web/settings", data={"max_tx_seconds": 999, "watchdog": "on"}).status_code == 400
     assert settings.max_tx_seconds == 45
+
+
+def test_watchdog_can_be_disabled(client, monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "max_tx_seconds", 60)
+    r = client.put("/api/settings", json={"max_tx_seconds": 0})
+    assert r.status_code == 200 and r.json()["watchdog"] is False
+    r = client.post("/api/tx/tune", json={"freq_hz": FREQ, "authorized": True})
+    assert r.status_code == 202
+    s = client.get("/api/status").json()
+    assert s["watchdog"] is False and s["remaining_s"] is None
+    assert "no auto-kill" in client.get("/partials/status").text
+    client.post("/api/stop")
+    # Web form: unticked box disables regardless of the number.
+    r = client.post("/web/settings", data={"max_tx_seconds": 30})
+    assert r.status_code == 200 and "Watchdog disabled" in r.text and "no cap" in r.text
+    r = client.post("/web/settings", data={"max_tx_seconds": 30, "watchdog": "on"})
+    assert "Watchdog set to 30 s" in r.text and settings.max_tx_seconds == 30

@@ -41,7 +41,7 @@ class ProcHandle:
 
 class Backend(Protocol):
     async def start(
-        self, argv: list[str], duration: int, stdin: bytes | None = None
+        self, argv: list[str], duration: int | None, stdin: bytes | None = None
     ) -> ProcHandle: ...
     async def stop(self, handle: ProcHandle) -> None: ...
     def running(self, handle: ProcHandle) -> bool: ...
@@ -93,7 +93,7 @@ async def _feed_stdin(proc: asyncio.subprocess.Process, data: bytes) -> None:
 
 class RealBackend:
     async def start(
-        self, argv: list[str], duration: int, stdin: bytes | None = None
+        self, argv: list[str], duration: int | None, stdin: bytes | None = None
     ) -> ProcHandle:
         # Absolute argv[0] (e.g. "/bin/sh -c <pipeline>") runs as-is; a bare
         # name resolves against BIN_DIR. Either way, BIN_DIR is on PATH so
@@ -128,9 +128,12 @@ class RealBackend:
 
 class MockBackend:
     async def start(
-        self, argv: list[str], duration: int, stdin: bytes | None = None
+        self, argv: list[str], duration: int | None, stdin: bytes | None = None
     ) -> ProcHandle:
         log.info("MOCK TX would run: %s (for %ss)", " ".join(argv), duration)
+        # No watchdog: the stand-in runs "forever" (until stop()).
+        if duration is None:
+            duration = 24 * 3600
         if stdin is not None:
             log.info("MOCK TX stdin: %r", stdin)
         # Stand-in process so pid/stop/supervise behave like the real thing.

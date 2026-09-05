@@ -52,12 +52,12 @@ in
     };
 
     maxTxSeconds = lib.mkOption {
-      type = lib.types.ints.positive;
+      type = lib.types.ints.unsigned;
       default = 60;
       description = ''
-        Watchdog auto-kill in seconds at startup. Adjustable at runtime from
-        the dashboard (Limits card) or `PUT /api/settings`, never above
-        {option}`maxTxSecondsHard`.
+        Watchdog auto-kill in seconds at startup; 0 disables the watchdog.
+        Adjustable at runtime from the dashboard (Limits card) or
+        `PUT /api/settings`, never above {option}`maxTxSecondsHard`.
       '';
     };
 

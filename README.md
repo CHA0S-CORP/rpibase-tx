@@ -65,6 +65,10 @@ curl -X PUT localhost:8000/api/settings -H 'content-type: application/json' \
 It applies to the next transmission, never one already running, and can never exceed
 `MAX_TX_SECONDS_HARD` (default 600). The runtime value resets to `MAX_TX_SECONDS` on restart.
 
+`0` turns the watchdog **off** (untick it in the Limits card): a transmission then runs until
+its process exits or you press STOP. A per-request `max_seconds` still applies if given. The
+lifespan shutdown hook and STOP work regardless.
+
 ## Uploads
 
 `POST /api/upload` (multipart `file`) stores an audio/image/IQ file under `UPLOAD_DIR`

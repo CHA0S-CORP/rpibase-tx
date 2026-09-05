@@ -8,8 +8,8 @@
 {% endif %}
 
 {% if s.running %}
-{% set total = s.elapsed_s + s.remaining_s %}
-{% set pct = (100 * s.elapsed_s / total) if total else 0 %}
+{% set total = (s.elapsed_s + s.remaining_s) if s.watchdog else 0 %}
+{% set pct = (100 * s.elapsed_s / total) if total else 100 %}
 <div class="panel status live">
   <div class="status-head">
     <span class="onair"><span class="dot"></span>ON AIR</span>
@@ -19,10 +19,11 @@
     {% if s.params.freq_hz %}{{ '%.3f' | format(s.params.freq_hz / 1e6) }}<span class="unit">MHz</span>{% else %}—{% endif %}
   </div>
   <div class="hint">{{ s.tx_mode }} · {{ modes[s.tx_mode].desc if s.tx_mode in modes else '' }}</div>
-  <div class="progress"><div class="bar" style="width: {{ '%.1f' | format(pct) }}%"></div></div>
+  <div class="progress{% if not s.watchdog %} nowatchdog{% endif %}"><div class="bar" style="width: {{ '%.1f' | format(pct) }}%"></div></div>
   <div class="times">
     <span class="mono">{{ s.elapsed_s }} s elapsed</span>
-    <span class="mono hint">{{ s.remaining_s }} s to auto-kill</span>
+    {% if s.watchdog %}<span class="mono hint">{{ s.remaining_s }} s to auto-kill</span>
+    {% else %}<span class="mono warn">no auto-kill · watchdog off</span>{% endif %}
   </div>
   <code class="argv">{{ s.argv | join(' ') }}</code>
   <button class="stop" hx-post="/web/stop" hx-target="#status">

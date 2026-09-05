@@ -145,3 +145,30 @@ async def test_nbfm_builds_pipeline(tmp_path, monkeypatch):
     assert state.argv[0] == "/bin/sh" and state.argv[1] == "-c"
     assert "sendiq" in state.argv[2] and "fmmod_fc" in state.argv[2]
     await m.stop()
+
+
+@pytest.mark.asyncio
+async def test_watchdog_off_runs_until_stopped(monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "max_tx_seconds", 0)
+    m = _mgr(FixedBackend(30))
+    state = await m.start("tune", {"freq_hz": FREQ})
+    assert state.deadline is None
+    s = m.status()
+    assert s["running"] and s["watchdog"] is False and s["remaining_s"] is None
+    await asyncio.sleep(0.3)
+    assert m.status()["running"] is True
+    assert await m.stop() is True
+
+
+@pytest.mark.asyncio
+async def test_watchdog_off_still_honours_request_cap(monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "max_tx_seconds", 0)
+    m = _mgr(FixedBackend(30))
+    state = await m.start("tune", {"freq_hz": FREQ, "max_seconds": 1})
+    assert round(state.deadline - state.started_at) == 1
+    await asyncio.sleep(1.8)
+    assert m.status()["running"] is False

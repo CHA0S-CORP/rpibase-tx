@@ -104,12 +104,19 @@ def limits_partial(request: Request) -> HTMLResponse:
 
 
 @router.post("/web/settings", response_class=HTMLResponse)
-def web_settings(request: Request, max_tx_seconds: int = Form(...)) -> HTMLResponse:
+def web_settings(
+    request: Request, max_tx_seconds: int = Form(...), watchdog: str | None = Form(None)
+) -> HTMLResponse:
+    seconds = max_tx_seconds if watchdog else 0
     try:
-        settings.set_max_tx_seconds(max_tx_seconds)
+        settings.set_max_tx_seconds(seconds)
     except ValueError as e:
         return _limits(request, err=str(e), code=400)
-    return _limits(request, msg=f"Watchdog set to {max_tx_seconds} s for the next transmission.")
+    msg = (
+        f"Watchdog set to {seconds} s for the next transmission."
+        if seconds else "Watchdog disabled for the next transmission."
+    )
+    return _limits(request, msg=msg)
 
 
 @router.get("/partials/uploads", response_class=HTMLResponse)

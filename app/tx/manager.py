@@ -68,7 +68,7 @@ class TxState:
     argv: list[str]
     pid: int
     started_at: float
-    deadline: float
+    deadline: float | None  # None = watchdog off, no auto-kill
 
 
 class TxManager:
@@ -81,11 +81,18 @@ class TxManager:
         self._gen = 0
         self._proclock = _ProcLock()
 
-    def _clamp_duration(self, requested: int | None) -> int:
+    def _clamp_duration(self, requested: int | None) -> int | None:
+        """Seconds until the watchdog fires, or None for no watchdog.
+
+        The cap is read here, at start, so a runtime change never touches a
+        running TX. cap == 0 means the watchdog is off: a per-request
+        max_seconds still applies, otherwise the process runs until it exits
+        or stop() is called.
+        """
         cap = settings.max_tx_seconds
         if requested is None or requested <= 0:
-            return cap
-        return min(requested, cap)
+            return cap or None
+        return min(requested, cap) if cap else requested
 
     async def start(self, mode_name: str, data: dict) -> TxState:
         mode = get_mode(mode_name)  # raises KeyError on unknown mode
@@ -116,14 +123,15 @@ class TxManager:
                 argv=argv,
                 pid=handle.pid,
                 started_at=now,
-                deadline=now + duration,
+                deadline=(now + duration) if duration is not None else None,
             )
             self._supervisor = asyncio.create_task(self._supervise(gen, handle, duration))
             return self._state
 
-    async def _supervise(self, gen: int, handle: ProcHandle, duration: int) -> None:
+    async def _supervise(self, gen: int, handle: ProcHandle, duration: int | None) -> None:
         """Reap the process on natural exit; kill it if it overruns the cap."""
         try:
+            # timeout=None waits forever: watchdog off.
             await asyncio.wait_for(handle.proc.wait(), timeout=duration)
         except asyncio.TimeoutError:
             # Exceeded the max-duration cap — force it down.
@@ -174,7 +182,11 @@ class TxManager:
             "params": self._state.params,
             "argv": self._state.argv,
             "elapsed_s": round(now - self._state.started_at, 1),
-            "remaining_s": round(max(0.0, self._state.deadline - now), 1),
+            "remaining_s": (
+                round(max(0.0, self._state.deadline - now), 1)
+                if self._state.deadline is not None else None
+            ),
+            "watchdog": self._state.deadline is not None,
         }
 
 
