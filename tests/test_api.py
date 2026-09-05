@@ -182,3 +182,39 @@ def test_nbfm_gain_out_of_range_rejected(client):
         json={"freq_hz": FREQ, "authorized": True, "audio_file": "/tmp/a.wav", "gain": 2.0},
     )
     assert r.status_code == 400
+
+
+def test_dashboard_and_partials_render(client, tmp_path, monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "upload_dir", str(tmp_path))
+    r = client.get("/")
+    assert r.status_code == 200
+    assert 'data-theme="panel"' in r.text and "theme-select" in r.text
+    for mode in ("tune", "pifmrds", "pocsag", "sendiq", "pisstv", "pichirp", "nbfm"):
+        f = client.get(f"/partials/form?mode={mode}")
+        assert f.status_code == 200 and f'hx-post="/web/tx/{mode}"' in f.text
+    assert client.get("/partials/form?mode=nope").status_code == 404
+    s = client.get("/partials/status")
+    assert s.status_code == 200 and "IDLE" in s.text
+    u = client.get("/partials/uploads")
+    assert u.status_code == 200 and "Nothing uploaded" in u.text
+
+
+def test_web_upload_and_status_live(client, tmp_path, monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "upload_dir", str(tmp_path))
+    r = client.post("/web/upload", files={"file": ("voice.wav", b"RIFF", "audio/wav")})
+    assert r.status_code == 200 and "voice.wav" in r.text and "upload-paths" in r.text
+    r = client.post(
+        "/web/tx/tune", data={"freq_hz": FREQ, "max_seconds": 5, "authorized": "on"}
+    )
+    assert r.status_code == 200 and "ON AIR" in r.text and "434.000" in r.text
+    r = client.post("/web/stop")
+    assert "IDLE" in r.text
+
+
+def test_web_tx_validation_error_renders(client):
+    r = client.post("/web/tx/tune", data={"freq_hz": 1, "authorized": "on"})
+    assert r.status_code == 400 and "freq_hz" in r.text

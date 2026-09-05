@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; background: #14130f; color: #ece7dc; font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif; }
+    a { color: #e0a02a; } a:hover { color: #f0b84a; }
+    .mono { font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; }
+    @keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(224,160,42,.55); } 100% { box-shadow: 0 0 0 12px rgba(224,160,42,0); } }
+    .ping { animation: ping 1.4s ease-out infinite; }
+  </style>
+</helmet>
+
+<div style="width: 390px; min-height: 844px; background: #14130f; display: flex; flex-direction: column; padding-top: 54px; box-sizing: border-box;">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 20px 14px; border-bottom: 1px solid #2a2820;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e0a02a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"></path><path d="M8.5 6.5a5 5 0 0 1 7 0"></path><path d="M5.5 3.5a9.5 9.5 0 0 1 13 0"></path><circle cx="12" cy="10" r="1.6" fill="#e0a02a" stroke="none"></circle></svg>
+      <div style="font-weight: 700; font-size: 17px;">rpibase-tx</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 6px; padding: 5px 10px 5px 8px; border-radius: 999px; background: rgba(217,72,59,.14); border: 1px solid rgba(217,72,59,.6); color: #ff8a7a; font-size: 11px; font-weight: 700; letter-spacing: .08em;">
+      <span style="width: 7px; height: 7px; border-radius: 50%; background: #ff8a7a;"></span>LIVE
+    </div>
+  </div>
+
+  <!-- Status, pinned first on phone -->
+  <div style="display: flex; flex-direction: column; gap: 16px; margin: 16px 16px 0; padding: 20px; background: #1c1a15; border: 1px solid rgba(224,160,42,.45); border-radius: 16px;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="ping" style="width: 10px; height: 10px; border-radius: 50%; background: #e0a02a;"></span>
+        <div style="font-size: 12px; font-weight: 700; letter-spacing: .1em; color: #e0a02a;">ON AIR</div>
+      </div>
+      <div class="mono" style="font-size: 11px; color: #8b8577;">pifmrds · pid 4123</div>
+    </div>
+    <div class="mono" style="font-size: 36px; font-weight: 600; line-height: 1; letter-spacing: -.02em;">434.000<span style="font-size: 16px; color: #8b8577; margin-left: 6px;">MHz</span></div>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div style="height: 6px; border-radius: 999px; background: #2a2820; overflow: hidden;">
+        <div style="width: 38%; height: 100%; border-radius: 999px; background: #e0a02a;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <div class="mono" style="font-size: 12px;">11.4 s</div>
+        <div class="mono" style="font-size: 12px; color: #8b8577;">18.6 s to auto-kill</div>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; height: 52px; border-radius: 10px; background: #d9483b; color: #fff; font-size: 16px; font-weight: 700;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff" stroke="none"><rect x="4" y="4" width="16" height="16" rx="2"></rect></svg>Stop transmission
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 28px 20px 12px;">
+    <div style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">Transmit</div>
+    <div style="font-size: 12px; color: #8b8577;">cap 60 s</div>
+  </div>
+
+  <div style="display: flex; gap: 6px; padding: 0 16px; overflow-x: auto;">
+    <div style="padding: 9px 14px; border-radius: 999px; font-size: 13px; border: 1px solid #2a2820; color: #a8a294; flex: none;">tune</div>
+    <div style="padding: 9px 14px; border-radius: 999px; font-size: 13px; border: 1px solid #3a362a; background: #2b281f; color: #f3eee2; font-weight: 600; flex: none;">pifmrds</div>
+    <div style="padding: 9px 14px; border-radius: 999px; font-size: 13px; border: 1px solid #2a2820; color: #a8a294; flex: none;">pocsag</div>
+    <div style="padding: 9px 14px; border-radius: 999px; font-size: 13px; border: 1px solid #2a2820; color: #a8a294; flex: none;">sendiq</div>
+    <div style="padding: 9px 14px; border-radius: 999px; font-size: 13px; border: 1px solid #2a2820; color: #a8a294; flex: none;">pisstv</div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 16px; margin: 16px 16px 24px; padding: 20px; background: #1c1a15; border: 1px solid #2a2820; border-radius: 16px;">
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <label style="font-size: 11px; font-weight: 600; letter-spacing: .06em; color: #a8a294;">FREQ_HZ <span style="color: #e0a02a;">*</span></label>
+      <div style="display: flex; align-items: center; height: 48px; padding: 0 14px; background: #14130f; border: 1px solid #3a362a; border-radius: 10px;">
+        <span class="mono" style="font-size: 16px; flex-grow: 1;">434 000 000</span>
+        <span class="mono" style="font-size: 11px; color: #8b8577;">434.000 MHz</span>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <label style="font-size: 11px; font-weight: 600; letter-spacing: .06em; color: #a8a294;">AUDIO_FILE <span style="color: #e0a02a;">*</span></label>
+      <div style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 14px; background: #14130f; border: 1px solid #3a362a; border-radius: 10px;">
+        <span class="mono" style="font-size: 14px; flex-grow: 1;">station-id.wav</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b8577" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 11px; font-weight: 600; letter-spacing: .06em; color: #a8a294;">RDS_PS</label>
+        <div style="display: flex; align-items: center; height: 48px; padding: 0 14px; background: #14130f; border: 1px solid #3a362a; border-radius: 10px;"><span class="mono" style="font-size: 15px;">RPITX</span></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 11px; font-weight: 600; letter-spacing: .06em; color: #a8a294;">MAX_SECONDS</label>
+        <div style="display: flex; align-items: center; height: 48px; padding: 0 14px; background: #14130f; border: 1px solid #3a362a; border-radius: 10px;"><span class="mono" style="font-size: 15px;">30</span></div>
+      </div>
+    </div>
+    <div style="display: flex; align-items: flex-start; gap: 12px; padding: 14px; border-radius: 12px; background: rgba(224,160,42,.07); border: 1px solid rgba(224,160,42,.35);">
+      <div style="width: 22px; height: 22px; flex: none; border-radius: 6px; border: 2px solid #e0a02a;"></div>
+      <div style="font-size: 13px; font-weight: 600; line-height: 1.35;">I am authorized to transmit on this frequency and accept responsibility.</div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; height: 52px; border-radius: 10px; background: #3a362a; color: #8b8577; font-size: 16px; font-weight: 700;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#8b8577" stroke="none"><path d="M7 4v16l13-8z"></path></svg>Transmit
+    </div>
+    <div style="font-size: 12px; color: #8b8577; text-align: center;">Busy: stop the current transmission first.</div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

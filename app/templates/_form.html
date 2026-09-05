@@ -1,25 +1,49 @@
 <form hx-post="/web/tx/{{ mode }}" hx-target="#status" class="tx-form">
-  {% for field, spec in schema.get('properties', {}).items() %}
-  {% set required = field in schema.get('required', []) %}
-  <div class="field">
-    <label for="f-{{ field }}">
-      {{ field }}{% if required %} <span class="req">*</span>{% endif %}
-    </label>
-    {% set t = spec.get('type', 'string') %}
-    <input id="f-{{ field }}" name="{{ field }}"
-           type="{{ 'number' if t in ('integer','number') else 'text' }}"
-           {% if t == 'number' %}step="any"{% endif %}
-           {% if spec.get('default') is not none %}value="{{ spec.get('default') }}"{% endif %}
-           {% if required %}required{% endif %}
-           placeholder="{{ spec.get('description', '') }}">
-    {% if spec.get('description') %}<small>{{ spec['description'] }}</small>{% endif %}
+  <div class="form-head">
+    <div class="form-title">{{ desc }}</div>
+    <div class="hint">{{ mode }}{% if mode == 'pifmrds' %} · MHz on the wire, Hz here{% elif mode == 'pocsag' %} · message goes to the pager on stdin as ric:message{% endif %}</div>
   </div>
-  {% endfor %}
+
+  <div class="fields">
+    {% for field, spec in schema.get('properties', {}).items() %}
+    {% set required = field in schema.get('required', []) %}
+    {% set t = spec.get('type') or (spec.get('anyOf', [{}])[0].get('type')) or 'string' %}
+    {% set is_file = field.endswith('_file') %}
+    <div class="field{% if is_file %} wide{% endif %}">
+      <label for="f-{{ field }}">{{ field | upper }}{% if required %} <span class="req">*</span>{% endif %}</label>
+      <div class="control">
+        {% if is_file %}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V6l12-2v12"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+        <input id="f-{{ field }}" name="{{ field }}" type="text" class="mono" list="upload-paths"
+               {% if required %}required{% endif %} placeholder="pick an uploaded file">
+        {% else %}
+        <input id="f-{{ field }}" name="{{ field }}" class="mono"
+               type="{{ 'number' if t in ('integer','number') else 'text' }}"
+               {% if t == 'number' %}step="any"{% endif %}
+               {% if spec.get('default') is not none %}value="{{ spec.get('default') }}"{% endif %}
+               {% if spec.get('maxLength') %}maxlength="{{ spec['maxLength'] }}"{% endif %}
+               {% if required %}required{% endif %}>
+        {% endif %}
+        {% if field == 'freq_hz' %}<span class="adorn mono mhz"></span>
+        {% elif field == 'max_seconds' %}<span class="adorn mono">cap {{ max_seconds }}</span>
+        {% elif spec.get('maxLength') %}<span class="adorn mono">max {{ spec['maxLength'] }}</span>{% endif %}
+      </div>
+      {% if spec.get('description') %}<small>{{ spec['description'] }}</small>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
 
   <label class="authz">
     <input type="checkbox" name="authorized">
-    I am authorized to transmit on this frequency and accept responsibility.
+    <span>
+      <strong>I am authorized to transmit on this frequency and accept responsibility.</strong>
+      <small>Required for every start. The API returns 403 without it.</small>
+    </span>
   </label>
 
-  <button type="submit" class="go">▶ Transmit</button>
+  <div class="form-foot">
+    <button type="submit" class="go">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M7 4v16l13-8z"></path></svg>Transmit
+    </button>
+  </div>
 </form>

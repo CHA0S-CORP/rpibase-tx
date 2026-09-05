@@ -13,3 +13,6 @@ __pycache__/
 *.img
 *.img.zst
 out.txt
+
+# Seeded Claude Design canvas (2 MB editor payload); the *.dc.html sources are the truth
+design/rpibase-tx-dashboard.html

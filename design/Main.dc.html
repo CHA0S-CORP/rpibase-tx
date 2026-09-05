@@ -1,0 +1,219 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; background: #14130f; color: #ece7dc; font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif; }
+    a { color: #e0a02a; } a:hover { color: #f0b84a; }
+    .mono { font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; }
+    @keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(224,160,42,.55); } 100% { box-shadow: 0 0 0 14px rgba(224,160,42,0); } }
+    .ping { animation: ping 1.4s ease-out infinite; }
+    input::placeholder { color: #6c665a; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; min-height: 900px; background: #14130f; display: flex; flex-direction: column; background-image: radial-gradient(ellipse 900px 380px at 70% -10%, rgba(224,160,42,.10), transparent 70%);">
+
+  <!-- Top bar -->
+  <div style="display: flex; align-items: center; justify-content: space-between; height: 64px; padding: 0 40px; border-bottom: 1px solid #2a2820;">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e0a02a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"></path><path d="M8.5 6.5a5 5 0 0 1 7 0"></path><path d="M5.5 3.5a9.5 9.5 0 0 1 13 0"></path><circle cx="12" cy="10" r="1.6" fill="#e0a02a" stroke="none"></circle></svg>
+      <div style="font-weight: 700; font-size: 18px; letter-spacing: -.01em;">rpibase-tx</div>
+      <div class="mono" style="font-size: 12px; color: #8b8577; padding-left: 14px; border-left: 1px solid #2a2820;">rpitx-pi3 · 10.0.4.21 · GPIO4</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div class="mono" style="font-size: 12px; color: #8b8577;">band 430.000–440.000 MHz</div>
+      <div style="display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 10px; border-radius: 999px; background: {{modeBg}}; border: 1px solid {{modeLine}}; color: {{modeFg}}; font-size: 12px; font-weight: 700; letter-spacing: .08em;">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: {{modeFg}};"></span>{{modeLabel}}
+      </div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div style="display: grid; grid-template-columns: minmax(0, 1fr) 440px; gap: 32px; padding: 36px 40px 40px; flex-grow: 1;">
+
+    <!-- Transmit column -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between;">
+        <h1 style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -.02em;">Transmit</h1>
+        <div style="font-size: 13px; color: #8b8577;">One transmission at a time. Watchdog kills at 60 s.</div>
+      </div>
+
+      <!-- Mode tabs -->
+      <div style="display: flex; gap: 6px; padding: 4px; background: #1c1a15; border: 1px solid #2a2820; border-radius: 12px; align-self: flex-start;">
+        <div style="padding: 8px 14px; border-radius: 8px; font-size: 14px; color: #a8a294;">tune</div>
+        <div style="padding: 8px 14px; border-radius: 8px; font-size: 14px; background: #2b281f; color: #f3eee2; font-weight: 600; box-shadow: inset 0 0 0 1px #3a362a;">pifmrds</div>
+        <div style="padding: 8px 14px; border-radius: 8px; font-size: 14px; color: #a8a294;">pocsag</div>
+        <div style="padding: 8px 14px; border-radius: 8px; font-size: 14px; color: #a8a294;">sendiq</div>
+        <div style="padding: 8px 14px; border-radius: 8px; font-size: 14px; color: #a8a294;">pisstv</div>
+        <div style="padding: 8px 14px; border-radius: 8px; font-size: 14px; color: #a8a294;">pichirp</div>
+        <div style="padding: 8px 14px; border-radius: 8px; font-size: 14px; color: #a8a294;">nbfm</div>
+      </div>
+
+      <!-- Form card -->
+      <div style="display: flex; flex-direction: column; gap: 22px; padding: 28px; background: #1c1a15; border: 1px solid #2a2820; border-radius: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div style="font-size: 16px; font-weight: 600;">FM broadcast with RDS text</div>
+          <div style="font-size: 13px; color: #8b8577;">pifmrds · frequency in MHz on the wire, Hz here.</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 20px;">
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-size: 12px; font-weight: 600; letter-spacing: .06em; color: #a8a294;">FREQ_HZ <span style="color: #e0a02a;">*</span></label>
+            <div style="display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px; background: #14130f; border: 1px solid #3a362a; border-radius: 10px;">
+              <span class="mono" style="font-size: 16px; flex-grow: 1;">434 000 000</span>
+              <span class="mono" style="font-size: 12px; color: #8b8577;">= 434.000 MHz</span>
+            </div>
+            <div style="font-size: 12px; color: #4fb0a0; display: flex; align-items: center; gap: 6px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4fb0a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>inside allowlist
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-size: 12px; font-weight: 600; letter-spacing: .06em; color: #a8a294;">MAX_SECONDS</label>
+            <div style="display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px; background: #14130f; border: 1px solid #3a362a; border-radius: 10px;">
+              <span class="mono" style="font-size: 16px; flex-grow: 1;">30</span>
+              <span class="mono" style="font-size: 12px; color: #8b8577;">cap 60</span>
+            </div>
+            <div style="font-size: 12px; color: #8b8577;">Clamped to MAX_TX_SECONDS.</div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 6px; grid-column: 1 / -1;">
+            <label style="font-size: 12px; font-weight: 600; letter-spacing: .06em; color: #a8a294;">AUDIO_FILE <span style="color: #e0a02a;">*</span></label>
+            <div style="display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 6px 0 14px; background: #14130f; border: 1px solid #3a362a; border-radius: 10px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b8577" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l12-2v12"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+              <span class="mono" style="font-size: 14px; flex-grow: 1;">station-id.wav</span>
+              <span class="mono" style="font-size: 12px; color: #8b8577;">1.2 MB</span>
+              <div style="padding: 8px 12px; border-radius: 7px; background: #2b281f; font-size: 13px; font-weight: 600; color: #ece7dc;">Choose upload</div>
+            </div>
+            <div style="font-size: 12px; color: #8b8577;">Only files in the upload directory can go on the air.</div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-size: 12px; font-weight: 600; letter-spacing: .06em; color: #a8a294;">RDS_PS</label>
+            <div style="display: flex; align-items: center; height: 46px; padding: 0 14px; background: #14130f; border: 1px solid #3a362a; border-radius: 10px;">
+              <span class="mono" style="font-size: 16px; flex-grow: 1;">RPITX</span>
+              <span class="mono" style="font-size: 12px; color: #8b8577;">5/8</span>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-size: 12px; font-weight: 600; letter-spacing: .06em; color: #a8a294;">RDS_RT</label>
+            <div style="display: flex; align-items: center; height: 46px; padding: 0 14px; background: #14130f; border: 1px solid #3a362a; border-radius: 10px;">
+              <span class="mono" style="font-size: 16px; flex-grow: 1;">rpibase-tx test carrier</span>
+              <span class="mono" style="font-size: 12px; color: #8b8577;">23/64</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Authorization -->
+        <div style="display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px; border-radius: 12px; background: rgba(224,160,42,.07); border: 1px solid rgba(224,160,42,.35);">
+          <div style="width: 22px; height: 22px; flex: none; border-radius: 6px; background: #e0a02a; display: flex; align-items: center; justify-content: center;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#14130f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 3px;">
+            <div style="font-size: 14px; font-weight: 600;">I am authorized to transmit on 434.000 MHz and accept responsibility.</div>
+            <div style="font-size: 12px; color: #a8a294;">Required for every start. The API returns 403 without it.</div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+          <div class="mono" style="font-size: 12px; color: #6c665a; word-break: break-all;">pifmrds -freq 434.0 -audio station-id.wav -ps RPITX -rt "rpibase-tx test carrier"</div>
+          <div style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 22px; border-radius: 10px; background: #e0a02a; color: #14130f; font-size: 15px; font-weight: 700; flex: none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#14130f" stroke="none"><path d="M7 4v16l13-8z"></path></svg>Transmit
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status column -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+
+      <!-- Live card -->
+      <div style="display: flex; flex-direction: column; gap: 20px; padding: 26px 28px; background: #1c1a15; border: 1px solid rgba(224,160,42,.45); border-radius: 16px; box-shadow: 0 0 0 4px rgba(224,160,42,.06);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span class="ping" style="width: 12px; height: 12px; border-radius: 50%; background: #e0a02a;"></span>
+            <div style="font-size: 13px; font-weight: 700; letter-spacing: .1em; color: #e0a02a;">ON AIR</div>
+          </div>
+          <div class="mono" style="font-size: 12px; color: #8b8577;">pid 4123</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div class="mono" style="font-size: 44px; font-weight: 600; line-height: 1; letter-spacing: -.02em;">434.000<span style="font-size: 20px; color: #8b8577; margin-left: 6px;">MHz</span></div>
+          <div style="font-size: 14px; color: #a8a294;">pifmrds · FM broadcast with RDS text</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="height: 8px; border-radius: 999px; background: #2a2820; overflow: hidden;">
+            <div style="width: 38%; height: 100%; border-radius: 999px; background: #e0a02a;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <div class="mono" style="font-size: 13px; color: #ece7dc;">11.4 s elapsed</div>
+            <div class="mono" style="font-size: 13px; color: #8b8577;">18.6 s to auto-kill</div>
+          </div>
+        </div>
+
+        <div class="mono" style="font-size: 12px; color: #8b8577; padding: 12px 14px; background: #14130f; border-radius: 10px; word-break: break-all; line-height: 1.5;">pifmrds -freq 434.0 -audio /var/lib/rpitx-dashboard/uploads/station-id.wav -ps RPITX -rt "rpibase-tx test carrier"</div>
+
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; height: 52px; border-radius: 10px; background: #d9483b; color: #fff; font-size: 16px; font-weight: 700; letter-spacing: .02em;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff" stroke="none"><rect x="4" y="4" width="16" height="16" rx="2"></rect></svg>Stop transmission
+        </div>
+        <div style="font-size: 12px; color: #8b8577; text-align: center; margin-top: -8px;">SIGINT first, SIGKILL after 3 s. Always releases the DMA.</div>
+      </div>
+
+      <!-- Limits -->
+      <div style="display: flex; flex-direction: column; gap: 14px; padding: 22px 28px; background: #1c1a15; border: 1px solid #2a2820; border-radius: 16px;">
+        <div style="font-size: 12px; font-weight: 700; letter-spacing: .1em; color: #8b8577;">LIMITS</div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <div style="font-size: 14px; color: #a8a294;">Allowed frequencies</div>
+          <div class="mono" style="font-size: 14px;">430.000–440.000 MHz</div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <div style="font-size: 14px; color: #a8a294;">Max transmission</div>
+          <div class="mono" style="font-size: 14px;">60 s</div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <div style="font-size: 14px; color: #a8a294;">Binaries</div>
+          <div class="mono" style="font-size: 14px;">/opt/rpitx</div>
+        </div>
+      </div>
+
+      <!-- Uploads -->
+      <div style="display: flex; flex-direction: column; gap: 12px; padding: 22px 28px; background: #1c1a15; border: 1px solid #2a2820; border-radius: 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 12px; font-weight: 700; letter-spacing: .1em; color: #8b8577;">UPLOADS</div>
+          <div style="font-size: 13px; font-weight: 600; color: #e0a02a;">Upload file</div>
+        </div>
+        <div style="display: flex; flex-direction: column;">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #2a2820;">
+            <span class="mono" style="font-size: 13px;">station-id.wav</span><span class="mono" style="font-size: 12px; color: #8b8577;">1.2 MB</span>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #2a2820;">
+            <span class="mono" style="font-size: 13px;">beacon.iq</span><span class="mono" style="font-size: 12px; color: #8b8577;">9.6 MB</span>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0;">
+            <span class="mono" style="font-size: 13px;">sstv-test.png</span><span class="mono" style="font-size: 12px; color: #8b8577;">212 KB</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"mode":{"editor":"enum","options":["real","mock"],"default":"real","section":"Backend"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const real = (this.props.mode ?? 'real') === 'real';
+    return real
+      ? { modeLabel: 'LIVE · REAL TX', modeBg: 'rgba(217,72,59,.14)', modeLine: 'rgba(217,72,59,.6)', modeFg: '#ff8a7a' }
+      : { modeLabel: 'MOCK · NO RF', modeBg: 'rgba(79,176,160,.12)', modeLine: 'rgba(79,176,160,.5)', modeFg: '#4fb0a0' };
+  }
+}
+</script>
+</body>
+</html>

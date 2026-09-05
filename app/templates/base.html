@@ -1,19 +1,50 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="panel">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>rpibase-tx</title>
+  <script>
+    // Apply the saved theme before first paint to avoid a flash.
+    try { var t = localStorage.getItem('rpitx-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@500;700;800&display=swap">
   <link rel="stylesheet" href="/static/app.css">
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 </head>
-<body>
-  <header class="topbar {{ 'live' if mode == 'real' else 'mock' }}">
-    <span class="brand">📡 rpibase-tx</span>
-    <span class="mode-badge">{{ 'LIVE — REAL TX' if mode == 'real' else 'MOCK — no RF' }}</span>
+<body class="{{ 'live' if mode == 'real' else 'mock' }}">
+  <header class="topbar">
+    <div class="topbar-left">
+      <svg class="brand-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V10"></path><path d="M8.5 6.5a5 5 0 0 1 7 0"></path><path d="M5.5 3.5a9.5 9.5 0 0 1 13 0"></path><circle cx="12" cy="10" r="1.6" fill="currentColor" stroke="none"></circle></svg>
+      <span class="brand">rpibase-tx</span>
+      <span class="host mono">{{ hostname }}</span>
+    </div>
+    <div class="topbar-right">
+      <span class="band mono">band {{ allowlist | fmt_ranges }}</span>
+      <span class="mode-badge"><span class="mode-dot"></span>{{ 'LIVE · REAL TX' if mode == 'real' else 'MOCK · NO RF' }}</span>
+      <label class="theme-pick">
+        <span class="sr-only">Theme</span>
+        <select id="theme-select" aria-label="Theme">
+          <option value="panel">Panel</option>
+          <option value="console">Console</option>
+          <option value="notebook">Notebook</option>
+        </select>
+      </label>
+    </div>
   </header>
   <main>
     {% block content %}{% endblock %}
   </main>
+  <script>
+    (function () {
+      var sel = document.getElementById('theme-select');
+      sel.value = document.documentElement.dataset.theme || 'panel';
+      sel.addEventListener('change', function () {
+        document.documentElement.dataset.theme = sel.value;
+        try { localStorage.setItem('rpitx-theme', sel.value); } catch (e) {}
+      });
+    })();
+  </script>
 </body>
 </html>

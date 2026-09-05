@@ -49,6 +49,11 @@ HTTP contract: `202` started · `403` unauthorized · `400` invalid/blocked freq
 - Jinja's template cache is explicitly disabled in `web/routes.py` (`templates.env.cache = None`) — it is
   broken under Python 3.14, which this repo runs on. Leave it off.
 - `RealBackend` needs root/GPIO on a real Pi; it is never exercised by the test suite.
+- Web banners (`msg`/`err`) render into `#flash` via `hx-swap-oob` in `_status.html`; the 1 s status
+  poll renders neither, so they survive polling. Keep them out of `#status` itself.
+- Themes are CSS variable blocks in `app/static/app.css` selected by `<html data-theme>` (panel,
+  console, notebook), persisted in localStorage by `base.html`. Components share one class vocabulary;
+  theme-specific overrides are `[data-theme=…]` selectors, not separate stylesheets.
 - **rpitx CLI conventions** (verified against the rev pinned in `pkgs/rpitx.nix`): `tune`, `pocsag`,
   `sendiq`, `pichirp` take **Hz**; only `pifmrds -freq` takes MHz. `pocsag` reads `ric:message` lines on
   **stdin** (`-r` = baud, `-b` = function bits). `pisstv` is positional (`pisstv file.rgb hz`) and wants

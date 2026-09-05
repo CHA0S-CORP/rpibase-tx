@@ -1,43 +1,64 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="grid">
-  <section class="panel">
-    <h2>Transmit</h2>
-    <label for="mode-select">Mode</label>
-    <select id="mode-select" name="mode"
-            hx-get="/partials/form"
-            hx-target="#mode-form"
-            hx-trigger="change">
-      {% for name, m in modes.items() %}
-      <option value="{{ name }}">{{ name }} — {{ m.desc }}</option>
-      {% endfor %}
-    </select>
+  <section class="tx-col">
+    <div class="tx-head">
+      <h1>Transmit</h1>
+      <span class="hint">One transmission at a time. Watchdog kills at {{ max_seconds }} s.</span>
+    </div>
 
-    <div id="mode-form"
-         hx-get="/partials/form"
+    <nav class="mode-tabs" id="mode-tabs" aria-label="Mode">
+      {% for name, m in modes.items() %}
+      <button type="button"
+              class="tab{% if loop.first %} active{% endif %}"
+              data-mode="{{ name }}"
+              title="{{ m.desc }}"
+              hx-get="/partials/form?mode={{ name }}"
+              hx-target="#mode-form">{{ name }}</button>
+      {% endfor %}
+    </nav>
+
+    <div id="mode-form" class="panel"
+         hx-get="/partials/form?mode={{ modes.keys() | first }}"
          hx-trigger="load">
     </div>
   </section>
 
-  <aside class="panel">
-    <h2>Status</h2>
+  <aside class="status-col">
+    <div id="flash"></div>
     <div id="status"
          hx-get="/partials/status"
          hx-trigger="load, every 1s">
-      <p>loading…</p>
+      <div class="panel"><p class="hint">loading…</p></div>
     </div>
 
-    <button class="stop"
-            hx-post="/web/stop"
-            hx-target="#status">■ STOP ALL</button>
+    <div class="panel limits">
+      <div class="panel-title">Limits</div>
+      <div class="kv"><span>Allowed frequencies</span><span class="mono">{{ allowlist | fmt_ranges }}</span></div>
+      <div class="kv"><span>Max transmission</span><span class="mono">{{ max_seconds }} s</span></div>
+      <div class="kv"><span>Binaries</span><span class="mono">{{ bin_dir }}</span></div>
+    </div>
 
-    <div class="meta">
-      <p><strong>Allowed freq (Hz):</strong></p>
-      <ul>
-        {% for lo, hi in allowlist %}<li>{{ "{:,}".format(lo) }} – {{ "{:,}".format(hi) }}</li>{% endfor %}
-      </ul>
-      <p><strong>Max TX:</strong> {{ max_seconds }}s (auto-kill)</p>
+    <div id="uploads"
+         hx-get="/partials/uploads"
+         hx-trigger="load">
+      <div class="panel"><div class="panel-title">Uploads</div></div>
     </div>
   </aside>
 </div>
+
+<script>
+  // Mode tab active state (the form itself is swapped in by HTMX).
+  document.getElementById('mode-tabs').addEventListener('click', function (e) {
+    var b = e.target.closest('.tab'); if (!b) return;
+    this.querySelectorAll('.tab').forEach(function (t) { t.classList.toggle('active', t === b); });
+  });
+  // Live "= X MHz" helper next to freq_hz.
+  document.body.addEventListener('input', function (e) {
+    if (e.target.name !== 'freq_hz') return;
+    var out = e.target.closest('.field').querySelector('.mhz'); if (!out) return;
+    var hz = parseInt(e.target.value, 10);
+    out.textContent = isFinite(hz) ? '= ' + (hz / 1e6).toFixed(3) + ' MHz' : '';
+  });
+</script>
 {% endblock %}

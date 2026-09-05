@@ -1,0 +1,24 @@
+<div class="panel uploads">
+  <div class="panel-head">
+    <div class="panel-title">Uploads</div>
+    <form class="upload-form" hx-post="/web/upload" hx-encoding="multipart/form-data" hx-target="#uploads">
+      <label class="link">
+        Upload file
+        <input type="file" name="file" class="sr-only" onchange="this.form.requestSubmit()">
+      </label>
+    </form>
+  </div>
+  {% if err %}<div class="banner err">{{ err }}</div>{% endif %}
+  {% if uploads %}
+  <ul class="upload-list">
+    {% for u in uploads %}
+    <li><span class="mono">{{ u.filename }}</span><span class="mono hint">{{ u.size | fmt_size }}</span></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="hint">Nothing uploaded yet. Audio, IQ and image files go here.</p>
+  {% endif %}
+  <datalist id="upload-paths">
+    {% for u in uploads %}<option value="{{ u.path }}">{{ u.filename }}</option>{% endfor %}
+  </datalist>
+</div>

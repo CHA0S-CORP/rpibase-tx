@@ -43,6 +43,15 @@ builder.
 `sox | csdr | sendiq` pipeline under `/bin/sh`. It needs `sox` and `csdr` on the host
 (the NixOS module installs them). Lower `gain` = narrower deviation.
 
+## Dashboard
+
+Server-rendered HTMX at `/`. Mode tabs load the form for each `REGISTRY` entry, the status
+card polls every second (frequency, countdown to auto-kill, argv, STOP), and uploads are
+listed with a file picker feeding the `*_file` fields. Three themes, picked from the top bar
+and remembered in the browser: **Panel** (dark instrument panel, default), **Console**
+(terminal), **Notebook** (light paper). They are pure CSS variable sets in
+`app/static/app.css` keyed on `<html data-theme>`; add one by defining another block.
+
 ## Uploads
 
 `POST /api/upload` (multipart `file`) stores an audio/image/IQ file under `UPLOAD_DIR`

@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; background: #0b0f0c; color: #b8f0c0; font-family: "IBM Plex Mono", Menlo, Consolas, monospace; }
+    a { color: #7ee787; } a:hover { color: #a5f3ac; }
+  </style>
+</helmet>
+<div style="width: 720px; height: 460px; background: #0b0f0c; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; font-size: 13px; line-height: 1.5;">
+  <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #2a4a30; padding-bottom: 8px;">
+    <div style="font-weight: 600;">rpibase-tx :: rpitx-pi3</div>
+    <div style="color: #ff6b6b; font-weight: 600;">[REAL TX]</div>
+  </div>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; flex-grow: 1;">
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <div style="color: #6fa878;">$ tx pifmrds</div>
+      <div>  freq_hz     <span style="color: #e6ffe9;">434000000</span>  [ok] allowed</div>
+      <div>  audio_file  <span style="color: #e6ffe9;">station-id.wav</span></div>
+      <div>  rds_ps      <span style="color: #e6ffe9;">RPITX</span></div>
+      <div>  rds_rt      <span style="color: #e6ffe9;">rpibase-tx test carrier</span></div>
+      <div>  max_seconds <span style="color: #e6ffe9;">30</span> (cap 60)</div>
+      <div style="margin-top: 8px;">  [x] authorized</div>
+      <div style="margin-top: 10px; display: flex; gap: 10px;">
+        <div style="padding: 6px 14px; border: 1px solid #7ee787; color: #7ee787;">TRANSMIT</div>
+        <div style="padding: 6px 14px; border: 1px solid #2a4a30; color: #6fa878;">modes...</div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px; border-left: 1px dashed #2a4a30; padding-left: 20px;">
+      <div style="color: #6fa878;">status</div>
+      <div><svg width="10" height="10" viewBox="0 0 10 10" style="vertical-align: middle; margin-right: 6px;"><circle cx="5" cy="5" r="4" fill="#7ee787"></circle></svg>ON AIR  434.000 MHz  pid 4123</div>
+      <div>elapsed  11.4s</div>
+      <div>remain   18.6s  <span style="color: #6fa878;">[████████░░░░░░░░░░░░]</span></div>
+      <div style="color: #6fa878; word-break: break-all;">argv pifmrds -freq 434.0 -audio … -ps RPITX</div>
+      <div style="margin-top: 10px; padding: 6px 14px; border: 1px solid #ff6b6b; color: #ff6b6b; align-self: flex-start;">STOP</div>
+      <div style="margin-top: auto; color: #6fa878;">allow 430–440 MHz · cap 60s · /opt/rpitx</div>
+    </div>
+  </div>
+  <div style="border-top: 1px dashed #2a4a30; padding-top: 8px; color: #6fa878;">Direction B — terminal console. Dense, zero chrome, one type family. Tradeoff: weak hierarchy for the safety gate; everything reads the same weight.</div>
+</div>
+</x-dc>
+</body>
+</html>

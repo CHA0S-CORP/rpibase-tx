@@ -1,18 +1,46 @@
-{% if err %}<div class="banner err">{{ err }}</div>{% endif %}
-{% if msg %}<div class="banner ok">{{ msg }}</div>{% endif %}
+{# Banners live in #flash, swapped out-of-band so the 1 s status poll (which
+   renders neither) does not wipe them; the next POST replaces them. #}
+{% if err or msg %}
+<div id="flash" hx-swap-oob="true">
+  {% if err %}<div class="banner err">{{ err }}</div>{% endif %}
+  {% if msg %}<div class="banner ok">{{ msg }}</div>{% endif %}
+</div>
+{% endif %}
 
 {% if s.running %}
-<div class="tx-live">
-  <div class="dot"></div>
-  <div>
-    <strong>TRANSMITTING — {{ s.tx_mode }}</strong>
-    <div class="sub">pid {{ s.pid }} · {{ s.elapsed_s }}s elapsed · {{ s.remaining_s }}s until auto-kill</div>
-    <code>{{ s.argv | join(' ') }}</code>
+{% set total = s.elapsed_s + s.remaining_s %}
+{% set pct = (100 * s.elapsed_s / total) if total else 0 %}
+<div class="panel status live">
+  <div class="status-head">
+    <span class="onair"><span class="dot"></span>ON AIR</span>
+    <span class="mono hint">pid {{ s.pid }}</span>
   </div>
+  <div class="freq mono">
+    {% if s.params.freq_hz %}{{ '%.3f' | format(s.params.freq_hz / 1e6) }}<span class="unit">MHz</span>{% else %}—{% endif %}
+  </div>
+  <div class="hint">{{ s.tx_mode }} · {{ modes[s.tx_mode].desc if s.tx_mode in modes else '' }}</div>
+  <div class="progress"><div class="bar" style="width: {{ '%.1f' | format(pct) }}%"></div></div>
+  <div class="times">
+    <span class="mono">{{ s.elapsed_s }} s elapsed</span>
+    <span class="mono hint">{{ s.remaining_s }} s to auto-kill</span>
+  </div>
+  <code class="argv">{{ s.argv | join(' ') }}</code>
+  <button class="stop" hx-post="/web/stop" hx-target="#status">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"></rect></svg>Stop transmission
+  </button>
+  <div class="hint center">SIGINT first, SIGKILL after 3 s. Always releases the DMA.</div>
 </div>
 {% else %}
-<div class="tx-idle">
-  <div class="dot idle"></div>
-  <span>Idle — no transmission ({{ s.mode }} backend)</span>
+<div class="panel status idle">
+  <div class="status-head">
+    <span class="onair idle"><span class="dot idle"></span>IDLE</span>
+    <span class="mono hint">{{ s.mode }} backend</span>
+  </div>
+  <div class="freq mono dim">—<span class="unit">MHz</span></div>
+  <div class="hint">No transmission. Carrier is off.</div>
+  <div class="progress"></div>
+  <button class="stop" hx-post="/web/stop" hx-target="#status" disabled>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"></rect></svg>Stop transmission
+  </button>
 </div>
 {% endif %}
