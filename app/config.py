@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     # separate processes.
     tx_lock_file: str = ""
 
+    # Escape hatch: let TX file params point anywhere on the host instead of
+    # only inside upload_dir. Off by default — the service runs as root.
+    allow_any_path: bool = False
+
     @property
     def lock_file(self) -> str:
         return self.tx_lock_file or os.path.join(tempfile.gettempdir(), "rpitx-tx.lock")
@@ -42,6 +46,14 @@ class Settings(BaseSettings):
             raise ValueError("rpitx_mode must be 'mock' or 'real'")
         return v
 
+    @field_validator("freq_allowlist")
+    @classmethod
+    def _valid_allowlist(cls, v: str) -> str:
+        # Fail at startup, not on the first TX request.
+        if not _parse_ranges(v):
+            raise ValueError("freq_allowlist must contain at least one 'low-high' range in Hz")
+        return v
+
     @property
     def is_real(self) -> bool:
         return self.rpitx_mode == "real"
@@ -49,20 +61,29 @@ class Settings(BaseSettings):
     @property
     def allowed_ranges(self) -> list[tuple[int, int]]:
         """Parse freq_allowlist into a list of (low_hz, high_hz) tuples."""
-        ranges: list[tuple[int, int]] = []
-        for chunk in self.freq_allowlist.split(","):
-            chunk = chunk.strip()
-            if not chunk:
-                continue
-            low_s, _, high_s = chunk.partition("-")
-            low, high = int(low_s), int(high_s)
-            if low > high:
-                low, high = high, low
-            ranges.append((low, high))
-        return ranges
+        return _parse_ranges(self.freq_allowlist)
 
     def freq_allowed(self, hz: int) -> bool:
         return any(low <= hz <= high for low, high in self.allowed_ranges)
+
+
+def _parse_ranges(spec: str) -> list[tuple[int, int]]:
+    ranges: list[tuple[int, int]] = []
+    for chunk in spec.split(","):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        low_s, sep, high_s = chunk.partition("-")
+        if not sep:
+            raise ValueError(f"bad range {chunk!r}: expected 'low-high' in Hz")
+        try:
+            low, high = int(low_s), int(high_s)
+        except ValueError:
+            raise ValueError(f"bad range {chunk!r}: bounds must be integers (Hz)") from None
+        if low > high:
+            low, high = high, low
+        ranges.append((low, high))
+    return ranges
 
 
 settings = Settings()

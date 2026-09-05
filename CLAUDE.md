@@ -49,9 +49,20 @@ HTTP contract: `202` started · `403` unauthorized · `400` invalid/blocked freq
 - Jinja's template cache is explicitly disabled in `web/routes.py` (`templates.env.cache = None`) — it is
   broken under Python 3.14, which this repo runs on. Leave it off.
 - `RealBackend` needs root/GPIO on a real Pi; it is never exercised by the test suite.
+- **rpitx CLI conventions** (verified against the rev pinned in `pkgs/rpitx.nix`): `tune`, `pocsag`,
+  `sendiq`, `pichirp` take **Hz**; only `pifmrds -freq` takes MHz. `pocsag` reads `ric:message` lines on
+  **stdin** (`-r` = baud, `-b` = function bits). `pisstv` is positional (`pisstv file.rgb hz`) and wants
+  raw 320x256 RGB, so non-`.rgb` images go through an ImageMagick `convert` pipe.
+- **File params (`audio_file`/`iq_file`/`image_file`) must be existing files inside `UPLOAD_DIR`**
+  (`ALLOW_ANY_PATH=true` disables that). The service runs as root on the Pi; this stops arbitrary host
+  files being put on the air.
+- `RealBackend` drains the child's stderr into the log. Never leave it as an unread pipe: rpitx tools
+  fill the 64 KiB buffer and block mid-transmission.
 
-## Separate Nix deployment path
+## Nix deployment path
 
-`flake.nix`, `pkgs/`, `modules/`, and `dashboard/app.py` are an **independent** NixOS SD-image build for a
-Pi 3B (packages rpitx from source + a standalone Flask dashboard). It is *not* the FastAPI app above and
-does not share code with `app/`. Treat the two as distinct deliverables; edits to one don't affect the other.
+`flake.nix`, `pkgs/`, and `modules/` build a NixOS SD image for a Pi 3B: `pkgs/rpitx.nix` compiles
+rpitx from source and `pkgs/rpitx-dashboard.nix` packages **this same `app/` package** under uvicorn as
+`rpitx-dashboard`. `modules/rpitx.nix` is the systemd unit and sets the env vars above. Pipeline tools
+(sox, csdr, ImageMagick) must be in the unit's `path`, not just `environment.systemPackages` — systemd
+units on NixOS do not see `/run/current-system/sw/bin`.

@@ -59,14 +59,18 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # sox + csdr are the modulation stages of the NBFM pipeline; PATH includes
-    # BIN_DIR (rpitx) plus these so `nbfm` resolves every stage at runtime.
-    environment.systemPackages = [ pkgs.rpitx cfg.package pkgs.sox pkgs.csdr ];
+    environment.systemPackages = [ pkgs.rpitx cfg.package pkgs.sox pkgs.csdr pkgs.imagemagick ];
 
     systemd.services.rpitx-dashboard = {
       description = "rpitx web control dashboard";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
+
+      # systemd units get an explicit store-path PATH, not /run/current-system/
+      # sw/bin, so systemPackages alone is NOT visible to the service. These are
+      # the pipeline stages: sox + csdr for `nbfm`, ImageMagick for `pisstv`.
+      # BIN_DIR (rpitx) is prepended by the app itself.
+      path = [ pkgs.sox pkgs.csdr pkgs.imagemagick ];
 
       serviceConfig = {
         # rpitx maps /dev/mem and drives Broadcom DMA/clock peripherals, which

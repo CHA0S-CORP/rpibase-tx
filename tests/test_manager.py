@@ -30,7 +30,7 @@ class FixedBackend(MockBackend):
     def __init__(self, seconds: float):
         self._seconds = seconds
 
-    async def start(self, argv, duration):  # noqa: ARG002 - duration intentionally ignored
+    async def start(self, argv, duration, stdin=None):  # noqa: ARG002 - duration ignored
         proc = await asyncio.create_subprocess_exec(
             "sleep", str(self._seconds), start_new_session=True
         )
@@ -132,10 +132,15 @@ async def test_cross_process_lock_blocks_second_manager():
 
 
 @pytest.mark.asyncio
-async def test_nbfm_builds_pipeline():
+async def test_nbfm_builds_pipeline(tmp_path, monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "upload_dir", str(tmp_path))
+    wav = tmp_path / "a.wav"
+    wav.write_bytes(b"x")
     m = _mgr(FixedBackend(5))
     state = await m.start(
-        "nbfm", {"freq_hz": FREQ, "audio_file": "/tmp/a.wav", "max_seconds": 5}
+        "nbfm", {"freq_hz": FREQ, "audio_file": str(wav), "max_seconds": 5}
     )
     assert state.argv[0] == "/bin/sh" and state.argv[1] == "-c"
     assert "sendiq" in state.argv[2] and "fmmod_fc" in state.argv[2]

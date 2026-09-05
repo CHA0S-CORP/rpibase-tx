@@ -34,7 +34,8 @@ async def start_tx(mode: str, body: dict = Body(default_factory=dict)) -> dict:
         raise HTTPException(404, f"unknown mode '{mode}'")
 
     # Authorization gate — no real (or mock) TX without an explicit ack.
-    if not body.pop("authorized", False):
+    # Strict: only JSON `true` counts — "false"/"no"/1 are all rejected.
+    if body.pop("authorized", None) is not True:
         raise HTTPException(403, "transmission requires 'authorized': true")
 
     try:

@@ -90,6 +90,7 @@ class TxManager:
     async def start(self, mode_name: str, data: dict) -> TxState:
         mode = get_mode(mode_name)  # raises KeyError on unknown mode
         validated, argv = mode.build(data)  # raises ValidationError on bad input
+        stdin = mode.build_stdin(validated)
         duration = self._clamp_duration(getattr(validated, "max_seconds", None))
 
         async with self._lock:
@@ -101,7 +102,7 @@ class TxManager:
             if not self._proclock.acquire():
                 raise TxBusyError()
             try:
-                handle = await self._backend.start(argv, duration)
+                handle = await self._backend.start(argv, duration, stdin)
             except BaseException:
                 self._proclock.release()
                 raise
@@ -145,13 +146,16 @@ class TxManager:
             self._supervisor = None
             if self._handle is None:
                 return False
+            # Report truthfully: the process may already have exited on its own
+            # with the supervisor not yet having cleared the slot.
+            was_running = self._backend.running(self._handle)
             await self._backend.stop(self._handle)
             # Bump the generation so any in-flight supervisor becomes a no-op.
             self._gen += 1
             self._handle = None
             self._state = None
             self._proclock.release()
-            return True
+            return was_running
 
     def _running(self) -> bool:
         return self._handle is not None and self._backend.running(self._handle)

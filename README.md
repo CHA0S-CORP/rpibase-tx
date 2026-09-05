@@ -48,7 +48,15 @@ builder.
 `POST /api/upload` (multipart `file`) stores an audio/image/IQ file under `UPLOAD_DIR`
 and returns its host `path`; feed that back as `audio_file` / `image_file` / `iq_file`
 when starting a TX. Client filenames are reduced to a safe basename inside the upload
-dir — nothing can escape it. `GET /api/uploads` lists what's stored.
+dir — nothing can escape it — and an existing name is never overwritten (`clip-1.wav`).
+`GET /api/uploads` lists what's stored.
+
+File params **must** point at an existing file inside `UPLOAD_DIR`; anything else is a
+`400`. The service runs as root on the Pi, so this is what stops `/etc/shadow` from being
+handed to `sendiq`. `ALLOW_ANY_PATH=true` lifts the restriction if you really want it.
+
+`pisstv` wants raw 320x256 RGB; any other image format is piped through ImageMagick
+`convert` first (installed by the NixOS module), so upload a PNG/JPEG and go.
 
 ## TX process safety
 

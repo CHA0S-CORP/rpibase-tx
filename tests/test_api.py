@@ -47,6 +47,13 @@ def test_tx_requires_authorization(client):
     assert r.status_code == 403
 
 
+@pytest.mark.parametrize("value", ["false", "no", "true", 1, "yes"])
+def test_authorized_must_be_json_true(client, value):
+    # Truthy strings/ints are not an explicit ack.
+    r = client.post("/api/tx/tune", json={"freq_hz": 434_000_000, "authorized": value})
+    assert r.status_code == 403
+
+
 def test_tx_start_stop(client):
     r = client.post(
         "/api/tx/tune", json={"freq_hz": 434_000_000, "max_seconds": 5, "authorized": True}
@@ -87,6 +94,26 @@ def test_upload_then_transmit(client, tmp_path, monkeypatch):
         json={"freq_hz": 434_000_000, "authorized": True, "audio_file": path},
     )
     assert r.status_code == 202
+
+
+def test_upload_never_overwrites(client, tmp_path, monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "upload_dir", str(tmp_path))
+    files = {"file": ("clip.wav", b"one", "audio/wav")}
+    assert client.post("/api/upload", files=files).json()["filename"] == "clip.wav"
+    files = {"file": ("clip.wav", b"two", "audio/wav")}
+    assert client.post("/api/upload", files=files).json()["filename"] == "clip-1.wav"
+    assert (tmp_path / "clip.wav").read_bytes() == b"one"
+
+
+def test_stop_after_natural_exit_reports_nothing_stopped(client):
+    r = client.post(
+        "/api/tx/tune", json={"freq_hz": FREQ, "max_seconds": 1, "authorized": True}
+    )
+    assert r.status_code == 202
+    assert _wait_idle(client, timeout=5.0)
+    assert client.post("/api/stop").json()["stopped"] is False
 
 
 def test_upload_filename_is_sanitized(client, tmp_path, monkeypatch):

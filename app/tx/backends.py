@@ -18,7 +18,7 @@ import asyncio
 import logging
 import os
 import signal
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Protocol
 
 from app.config import settings
@@ -30,6 +30,9 @@ log = logging.getLogger("rpibase.tx")
 class ProcHandle:
     proc: asyncio.subprocess.Process
     argv: list[str]
+    # Background tasks tied to this process (stderr drain, stdin feed). Held
+    # here so they are not garbage-collected mid-flight.
+    tasks: list[asyncio.Task] = field(default_factory=list)
 
     @property
     def pid(self) -> int:
@@ -37,7 +40,9 @@ class ProcHandle:
 
 
 class Backend(Protocol):
-    async def start(self, argv: list[str], duration: int) -> ProcHandle: ...
+    async def start(
+        self, argv: list[str], duration: int, stdin: bytes | None = None
+    ) -> ProcHandle: ...
     async def stop(self, handle: ProcHandle) -> None: ...
     def running(self, handle: ProcHandle) -> bool: ...
 
@@ -61,8 +66,35 @@ async def _terminate(proc: asyncio.subprocess.Process) -> None:
         await proc.wait()
 
 
+async def _drain_stderr(name: str, stream: asyncio.StreamReader) -> None:
+    """Log the child's stderr line by line.
+
+    The pipe MUST be read: rpitx tools chatter on stderr, and once the 64 KiB
+    pipe buffer fills the child blocks in write() with the carrier in an
+    undefined state until the watchdog kills it.
+    """
+    try:
+        while line := await stream.readline():
+            log.info("[%s] %s", name, line.decode(errors="replace").rstrip())
+    except (asyncio.CancelledError, ValueError):
+        pass
+
+
+async def _feed_stdin(proc: asyncio.subprocess.Process, data: bytes) -> None:
+    assert proc.stdin is not None
+    try:
+        proc.stdin.write(data)
+        await proc.stdin.drain()
+    except (BrokenPipeError, ConnectionResetError):
+        pass  # child exited before reading; the supervisor reports that
+    finally:
+        proc.stdin.close()
+
+
 class RealBackend:
-    async def start(self, argv: list[str], duration: int) -> ProcHandle:
+    async def start(
+        self, argv: list[str], duration: int, stdin: bytes | None = None
+    ) -> ProcHandle:
         # Absolute argv[0] (e.g. "/bin/sh -c <pipeline>") runs as-is; a bare
         # name resolves against BIN_DIR. Either way, BIN_DIR is on PATH so
         # pipeline tools (sendiq, csdr) resolve.
@@ -72,12 +104,20 @@ class RealBackend:
         log.warning("REAL TX spawning: %s", " ".join(cmd))
         proc = await asyncio.create_subprocess_exec(
             *cmd,
+            # Never inherit our stdin: under systemd it is /dev/null, under a
+            # terminal it would steal keystrokes.
+            stdin=asyncio.subprocess.PIPE if stdin is not None else asyncio.subprocess.DEVNULL,
             stdout=asyncio.subprocess.DEVNULL,
             stderr=asyncio.subprocess.PIPE,
             env=env,
             start_new_session=True,
         )
-        return ProcHandle(proc=proc, argv=argv)
+        handle = ProcHandle(proc=proc, argv=argv)
+        assert proc.stderr is not None
+        handle.tasks.append(asyncio.create_task(_drain_stderr(argv[0], proc.stderr)))
+        if stdin is not None:
+            handle.tasks.append(asyncio.create_task(_feed_stdin(proc, stdin)))
+        return handle
 
     async def stop(self, handle: ProcHandle) -> None:
         await _terminate(handle.proc)
@@ -87,11 +127,16 @@ class RealBackend:
 
 
 class MockBackend:
-    async def start(self, argv: list[str], duration: int) -> ProcHandle:
+    async def start(
+        self, argv: list[str], duration: int, stdin: bytes | None = None
+    ) -> ProcHandle:
         log.info("MOCK TX would run: %s (for %ss)", " ".join(argv), duration)
+        if stdin is not None:
+            log.info("MOCK TX stdin: %r", stdin)
         # Stand-in process so pid/stop/supervise behave like the real thing.
         proc = await asyncio.create_subprocess_exec(
             "sleep", str(duration),
+            stdin=asyncio.subprocess.DEVNULL,
             stdout=asyncio.subprocess.DEVNULL,
             stderr=asyncio.subprocess.DEVNULL,
             start_new_session=True,

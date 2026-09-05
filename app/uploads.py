@@ -26,16 +26,43 @@ def _safe_name(filename: str | None) -> str:
     return base
 
 
+def _unique(root: Path, name: str) -> Path:
+    """Never overwrite: a live TX may be reading the existing file."""
+    dest = root / name
+    if not dest.exists():
+        return dest
+    stem, dot, ext = name.partition(".")
+    for i in range(1, 10_000):
+        cand = root / f"{stem}-{i}{dot}{ext}"
+        if not cand.exists():
+            return cand
+    raise ValueError("too many uploads with the same name")
+
+
 def save_upload(filename: str | None, src: BinaryIO) -> Path:
     """Persist an uploaded stream under the upload root, return its full path."""
     root = upload_root()
-    dest = (root / _safe_name(filename)).resolve()
+    dest = _unique(root, _safe_name(filename)).resolve()
     # Defense in depth: never let a crafted name escape the upload root.
     if root not in dest.parents and dest != root:
         raise ValueError("resolved path escapes upload directory")
     with dest.open("wb") as out:
         shutil.copyfileobj(src, out)
     return dest
+
+
+def is_allowed_file(path: str) -> bool:
+    """A TX file param must be an existing file inside the upload root.
+
+    The service runs as root on the Pi; without this, any host file (e.g.
+    /etc/shadow) could be handed to sendiq and put on the air.
+    """
+    p = Path(path).resolve()
+    if not p.is_file():
+        return False
+    if settings.allow_any_path:
+        return True
+    return upload_root() in p.parents
 
 
 def list_uploads() -> list[dict]:
