@@ -28,6 +28,34 @@ import sys
 
 CHUNK = 1 << 20
 
+# Imager 2.x takes its Device page from the manifest too (top-level "imager"
+# block); without it the device list is empty and NEXT stays disabled.
+# Copied from the official os_list_imagingutility_v4.json.
+IMAGER_BLOCK = {
+    "latest_version": "2.0.0",
+    "url": "https://downloads.raspberrypi.com/imager/imager_latest.dmg",
+    "devices": [
+        {
+            "name": "Raspberry Pi 3",
+            "tags": ["pi3-64bit", "pi3-32bit"],
+            "default": True,
+            "icon": "https://downloads.raspberrypi.com/imager/icons/RPi_3.png",
+            "description": "Raspberry Pi 3 Model A+ / B / B+ and Compute Module 3 / 3+",
+            "matching_type": "inclusive",
+            "capabilities": [],
+        },
+        {
+            "name": "Raspberry Pi Zero 2 W",
+            "tags": ["pi3-64bit", "pi3-32bit"],
+            "default": False,
+            "icon": "https://downloads.raspberrypi.com/imager/icons/RPi_Zero_2_W.png",
+            "description": "Raspberry Pi Zero 2 W",
+            "matching_type": "inclusive",
+            "capabilities": [],
+        },
+    ],
+}
+
 
 def _extract_stats(path: pathlib.Path) -> tuple[int, str]:
     """(uncompressed size, sha256) of the image inside a .zst, or of a raw .img."""
@@ -79,6 +107,7 @@ def main() -> None:
     extract_size, extract_sha = _extract_stats(img)
 
     manifest = {
+        "imager": IMAGER_BLOCK,
         "os_list": [
             {
                 "name": "rpibase-tx (rpitx + web dashboard, Raspberry Pi 3)",
