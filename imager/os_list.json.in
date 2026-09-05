@@ -1,0 +1,15 @@
+{
+  "os_list": [
+    {
+      "name": "rpibase-tx (rpitx + web dashboard, Raspberry Pi 3)",
+      "description": "NixOS image with rpitx and the rpibase-tx control panel on port 8080. Supports Imager OS customisation (hostname, user, SSH keys, Wi-Fi).",
+      "url": "@URL@",
+      "release_date": "@RELEASE_DATE@",
+      "image_download_size": @DOWNLOAD_SIZE@,
+      "extract_size": @EXTRACT_SIZE@,
+      "extract_sha256": "@EXTRACT_SHA256@",
+      "init_format": "systemd",
+      "devices": ["pi3-64bit"]
+    }
+  ]
+}

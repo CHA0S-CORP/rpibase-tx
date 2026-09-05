@@ -119,6 +119,37 @@ Only **one** transmission runs at a time — rpitx owns the DMA/PLL hardware exc
 Covers argv building per mode, allow-list rejection, single-slot `409`, and the
 watchdog auto-kill — all on the mock backend, no hardware.
 
+## Headless setup (SSH, Wi-Fi, network) from the boot partition
+
+No monitor needed. After flashing, the SD card's FAT partition holds
+`HEADLESS-README.txt` with the full cheat sheet. Two ways to configure:
+
+**Raspberry Pi Imager.** Use "OS customisation" as you would for Raspberry Pi OS:
+hostname, username/password, SSH public key, Wi-Fi, timezone. Imager writes
+`firstrun.sh`; the image ships NixOS shims for `imager_custom` / `userconf`, so the
+stock script runs unmodified on first boot. Imager 1.x customises the local
+`.img.zst` directly. Imager 2.x only customises images a manifest describes, so each
+release also publishes `os_list.json`:
+
+```bash
+rpi-imager --repo https://github.com/CHA0S-CORP/rpibase-tx/releases/download/<TAG>/os_list.json
+```
+
+**Plain files** (Raspberry Pi OS conventions) dropped on the FAT partition:
+
+| File | Effect |
+|---|---|
+| `userconf.txt` | `user:password` (plain or `openssl passwd -6` hash); one-shot |
+| `authorized_keys` | SSH keys for `pi` |
+| `wpa_supplicant.conf` | Wi-Fi, standard syntax |
+| `hostname` | hostname |
+| `network.txt` | static IP: `INTERFACE=eth0`, `ADDRESS=10.0.0.5/24`, `GATEWAY=`, `DNS=` |
+| `*.network` | raw systemd-networkd units for anything custom |
+| `ssh` | accepted; sshd is always on |
+
+All but the one-shot files are re-applied every boot, so edit them on the card to
+change Wi-Fi or addressing later. Implementation: `modules/headless.nix`.
+
 ## Nix build (NixOS Pi image)
 
 The flake builds rpitx from source, packages this dashboard, and bakes both into a
@@ -129,6 +160,8 @@ flake.nix                 outputs: packages, nixosConfigurations.rpitx-pi3, .#sd
 pkgs/rpitx.nix            builds F5OEO/rpitx + librpitx (aarch64)
 pkgs/rpitx-dashboard.nix  wraps uvicorn app.main:app with its Python deps
 modules/rpitx.nix         services.rpitx-dashboard NixOS module (systemd unit)
+modules/headless.nix      boot-partition provisioning + Raspberry Pi Imager shims
+imager/                   boot-partition README + Imager os_list.json template
 ```
 
 ```bash

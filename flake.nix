@@ -37,6 +37,7 @@
           nixos-hardware.nixosModules.raspberry-pi-3
           "${nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64.nix"
           ./modules/rpitx.nix
+          ./modules/headless.nix
           ({ config, lib, pkgs, ... }: {
             nixpkgs.overlays = [ overlay ];
 
@@ -47,7 +48,14 @@
             # lines are appended after the stock sections, so scope them [all].
             sdImage.populateFirmwareCommands = lib.mkAfter ''
               printf '\n[all]\n# rpitx: stable clock for the DMA RF carrier generator\ngpu_freq=250\nforce_turbo=1\n' >> firmware/config.txt
+              # Headless-setup cheat sheet, visible to anyone who mounts the card.
+              cp ${./imager/HEADLESS-README.txt} firmware/HEADLESS-README.txt
             '';
+
+            # Headless setup from files on the FAT partition: Raspberry Pi
+            # Imager's OS customisation (firstrun.sh) or plain files — see
+            # modules/headless.nix and imager/HEADLESS-README.txt.
+            services.rpitx-headless.enable = true;
 
             services.rpitx-dashboard = {
               enable = true;
@@ -64,16 +72,15 @@
             users.users.pi = {
               isNormalUser = true;
               extraGroups = [ "wheel" ];
-              # CHANGE THIS or set hashedPassword / openssh authorized keys.
+              # Fallback only. Override at flash time via Imager or
+              # userconf.txt / authorized_keys on the boot partition.
               initialPassword = "raspberry";
             };
             security.sudo.wheelNeedsPassword = false;
 
-            # Wi-Fi (optional): fill in and uncomment.
-            # networking.wireless = {
-            #   enable = true;
-            #   networks."YOUR_SSID".psk = "YOUR_PASSWORD";
-            # };
+            # Wi-Fi comes from the boot partition (Imager or wpa_supplicant.conf).
+            # To bake a network into the image instead:
+            # networking.wireless.networks."YOUR_SSID".psk = "YOUR_PASSWORD";
 
             # Shrink the image a bit; drop if you want docs/manpages.
             documentation.enable = false;

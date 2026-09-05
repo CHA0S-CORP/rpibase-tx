@@ -66,3 +66,10 @@ rpitx from source and `pkgs/rpitx-dashboard.nix` packages **this same `app/` pac
 `rpitx-dashboard`. `modules/rpitx.nix` is the systemd unit and sets the env vars above. Pipeline tools
 (sox, csdr, ImageMagick) must be in the unit's `path`, not just `environment.systemPackages` — systemd
 units on NixOS do not see `/run/current-system/sw/bin`.
+
+`modules/headless.nix` provisions from files on the FAT partition (`/boot/firmware`): Raspberry Pi
+Imager's `firstrun.sh` (via shims at `/usr/lib/raspberrypi-sys-mods/imager_custom` and
+`/usr/lib/userconf-pi/userconf`) or plain files (`userconf.txt`, `authorized_keys`,
+`wpa_supplicant.conf`, `hostname`, `network.txt`, `*.network`). Wi-Fi goes through
+`networking.wireless.allowAuxiliaryImperativeNetworks`, networking is networkd. `imager/os_list.json.in`
+is filled by CI on tags so Imager 2.x will customise the image (`init_format: systemd`).

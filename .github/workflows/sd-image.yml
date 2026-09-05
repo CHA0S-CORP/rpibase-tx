@@ -86,9 +86,34 @@ jobs:
           path: artifacts/*.img.zst
           if-no-files-found: error
 
+      # Raspberry Pi Imager 2.x refuses to customise a local image unless a
+      # manifest declares its init_format. Ship one next to the image so
+      # `rpi-imager --repo <url to os_list.json>` offers it with hostname /
+      # user / SSH / Wi-Fi customisation (applied by modules/headless.nix).
+      - name: Write Raspberry Pi Imager manifest (tags only)
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          IMG: ${{ steps.img.outputs.name }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          f="artifacts/$IMG"
+          dl_size=$(stat -c %s "$f")
+          ex_size=$(zstd -dc "$f" | wc -c)
+          ex_sha=$(zstd -dc "$f" | sha256sum | cut -d' ' -f1)
+          sed -e "s|@URL@|https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${IMG}|" \
+              -e "s|@RELEASE_DATE@|$(date -u +%Y-%m-%d)|" \
+              -e "s|@DOWNLOAD_SIZE@|$dl_size|" \
+              -e "s|@EXTRACT_SIZE@|$ex_size|" \
+              -e "s|@EXTRACT_SHA256@|$ex_sha|" \
+              imager/os_list.json.in > artifacts/os_list.json
+          cat artifacts/os_list.json
+
       - name: Publish release (tags only)
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/*.img.zst
+          files: |
+            artifacts/*.img.zst
+            artifacts/os_list.json
           generate_release_notes: true
